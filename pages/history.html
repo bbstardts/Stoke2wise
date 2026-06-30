@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — History</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/history.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Transaction History</h2>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="history-toolbar">
+      <div class="search-wrap">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M9 3.5a5.5 5.5 0 100 11 5.5 5.5 0 000-11zM2 9a7 7 0 1112.452 4.391l3.328 3.329a.75.75 0 11-1.06 1.06l-3.329-3.328A7 7 0 012 9z" clip-rule="evenodd"/>
+        </svg>
+        <input
+          id="historySearch"
+          type="text"
+          class="history-search"
+          placeholder="Search by product, category…"
+          autocomplete="off"
+        />
+        <button id="clearSearch" class="clear-search hidden" title="Clear search">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"/>
+          </svg>
+        </button>
+      </div>
+
+      <select id="historyActionFilter" class="history-filter">
+        <option value="all">All Transactions</option>
+        <option value="Received">Received (GRN)</option>
+        <option value="Issued">Issued</option>
+        <option value="Stock Out">Stock Out</option>
+      </select>
+
+      <!-- Date range quick-pick -->
+      <select id="historyDateRange" class="history-filter">
+        <option value="all">All Dates</option>
+        <option value="today">Today</option>
+        <option value="week">This Week</option>
+        <option value="month">This Month</option>
+        <option value="year">This Year</option>
+        <option value="custom">Custom Range…</option>
+      </select>
+
+      <!-- Custom date inputs (hidden until "custom" is chosen) -->
+      <span id="customDateWrap" class="custom-date-wrap hidden">
+        <input type="date" id="dateFrom" class="filter-date" title="From date" />
+        <span class="date-sep">—</span>
+        <input type="date" id="dateTo"   class="filter-date" title="To date" />
+      </span>
+
+      <span id="historyCount" class="history-count">— records</span>
+
+      <!-- Print / PDF button -->
+      <button id="printHistoryBtn" class="btn-print-history" title="Download as PDF">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="15" height="15">
+          <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v4a2 2 0 002 2h1v1a1 1 0 001 1h8a1 1 0 001-1v-1h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a1 1 0 00-1-1H6a1 1 0 00-1 1zm2 0h6v3H7V4zm-1 9h8v3H6v-3zm8-5a1 1 0 110 2 1 1 0 010-2z" clip-rule="evenodd"/>
+        </svg>
+        PDF
+      </button>
+    </div>
+
+    <!-- History Table -->
+    <div class="table-wrap">
+      <table class="data-table history-table" id="historyTable">
+        <thead>
+          <tr>
+            <th>Date &amp; Time</th>
+            <th>Category</th>
+            <th>Product Name</th>
+            <th>Transaction</th>
+            <th class="col-num">Qty Changed</th>
+            <th class="col-num">Stock After</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+        <tbody id="historyBody">
+          <!-- Populated by history.js -->
+        </tbody>
+        <tfoot id="historyFoot"></tfoot>
+      </table>
+    </div>
+
+    <!-- Empty state -->
+    <div id="historyEmpty" class="history-empty hidden">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25"/>
+      </svg>
+      <p class="empty-title">No records found</p>
+      <p class="empty-sub">Try adjusting your search or filter, or wait for new transactions to appear.</p>
+    </div>
+  </main>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/print.js"></script>
+  <script src="../js/history.js"></script>
+</body>
+</html>

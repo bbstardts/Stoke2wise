@@ -1,0 +1,83 @@
+/*
+ * settings.css
+ * ─────────────────────────────────────────────
+ * Purpose: Styles for the settings page sections.
+ *
+ * Covers:
+ *   .settings-section          — card wrapper per settings group
+ *   .settings-heading          — h3 within a settings card
+ *   .settings-hint             — muted helper text
+ *   .settings-form             — column form layout
+ *   .settings-form--inline     — horizontal form (invite row)
+ *   .settings-section--danger  — red-tinted danger zone card
+ */
+
+.settings-section {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.settings-heading {
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.settings-hint {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  margin-top: -8px;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.settings-form .btn-primary {
+  align-self: flex-start;
+}
+
+.settings-form--inline {
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.settings-form--inline input,
+.settings-form--inline select {
+  padding: 9px 12px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  flex: 1;
+  min-width: 180px;
+}
+.settings-form--inline input:focus,
+.settings-form--inline select:focus {
+  border-color: var(--color-primary);
+}
+
+/* Danger zone */
+.settings-section--danger {
+  border-color: rgba(220,38,38,0.25);
+  background: rgba(220,38,38,0.03);
+}
+.settings-section--danger .settings-heading {
+  color: var(--color-danger);
+  border-bottom-color: rgba(232,84,84,0.2);
+}
+.settings-section--danger p {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}

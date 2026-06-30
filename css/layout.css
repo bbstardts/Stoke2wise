@@ -1,0 +1,357 @@
+/*
+ * layout.css
+ * ─────────────────────────────────────────────
+ * Purpose: Sidebar + main content shell used by every
+ *          authenticated page (dashboard, products, grn,
+ *          issue, history, settings).
+ *
+ * Structure rendered by sidebar.js:
+ *   <nav class="sidebar">
+ *     <div class="sidebar-brand"> ... </div>
+ *     <ul class="sidebar-nav"> ... </ul>
+ *     <div class="sidebar-footer"> ... </div>
+ *   </nav>
+ *   <div class="main-content"> ... </div>
+ *
+ * Shared layout components:
+ *   .page-header          — page title + actions row
+ *   .section-block        — white-card section wrapper
+ *   .section-title        — h3 inside a section-block
+ *   .toolbar              — search + filter row
+ *   .search-input         — text input in toolbar
+ *   .filter-select        — <select> in toolbar
+ *   .page-tag             — coloured badge next to page title
+ */
+
+/* ── App Shell ── */
+body {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* ── Sidebar ── */
+.sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: #F3F4F6;
+  border-right: 1px solid var(--color-border);
+  display: flex;
+  flex-direction: column;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 22px 18px 18px;
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 800;
+  font-size: 15px;
+  letter-spacing: -0.02em;
+}
+.sidebar-brand .brand-icon {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.sidebar-nav {
+  list-style: none;
+  padding: 10px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-nav li a {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background var(--transition), color var(--transition);
+}
+.sidebar-nav li a:hover {
+  background: var(--color-surface-2);
+  color: var(--color-text);
+  text-decoration: none;
+}
+.sidebar-nav li a.active {
+  background: #EFF6FF;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.sidebar-nav li a .nav-icon {
+  width: 18px;
+  text-align: center;
+  font-size: 15px;
+}
+
+.sidebar-footer {
+  padding: 14px 18px;
+  border-top: 1px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.sidebar-footer .user-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+.sidebar-footer .signout-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+}
+.sidebar-footer .signout-btn:hover { color: var(--color-danger); }
+
+/* ── Main Content ── */
+.main-content {
+  flex: 1;
+  padding: 28px 32px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* ── Page Header ── */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.page-header h2 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.page-tag {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: rgba(22,163,74,0.1);
+  color: var(--color-success);
+}
+.page-tag--out {
+  background: rgba(220,38,38,0.1);
+  color: var(--color-danger);
+}
+
+/* ── Section Blocks ── */
+.section-block {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px;
+}
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--color-text);
+  margin-bottom: 14px;
+}
+.section-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.section-header-row .section-title { margin-bottom: 0; }
+
+/* ── Toolbar ── */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.toolbar--wrap { flex-wrap: wrap; }
+
+.search-input {
+  padding: 9px 14px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  min-width: 200px;
+  flex: 1;
+  transition: border-color var(--transition);
+}
+.search-input:focus { border-color: var(--color-primary); }
+
+.filter-select {
+  padding: 9px 12px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+}
+
+.date-label {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .sidebar { display: none; }  /* Future: add hamburger toggle */
+  .main-content { padding: 16px; }
+}
+
+/* ── Sidebar footer user avatar (auth update) ── */
+.sidebar-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  letter-spacing: 0.02em;
+}
+.user-name {
+  flex: 1;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.signout-btn {
+  font-size: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 4px;
+  border-radius: var(--radius-sm);
+  transition: color var(--transition);
+  flex-shrink: 0;
+}
+.signout-btn:hover { color: var(--color-danger); }
+
+/* ── Mobile Hamburger Nav ── */
+.mobile-topbar {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0;
+  height: 52px;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  z-index: 200;
+}
+.mobile-topbar .brand-name {
+  font-weight: 800;
+  font-size: 15px;
+  flex: 1;
+}
+.hamburger-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  border-radius: var(--radius-sm);
+}
+.hamburger-btn span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: var(--color-text);
+  border-radius: 2px;
+  transition: all 0.25s;
+}
+
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 299;
+}
+.sidebar-overlay.active { display: block; }
+
+@media (max-width: 768px) {
+  .mobile-topbar { display: flex; }
+  .main-content { padding: 16px; padding-top: 68px; }
+
+  .sidebar {
+    display: flex !important;
+    position: fixed;
+    top: 0; left: 0;
+    height: 100vh;
+    width: 240px;
+    z-index: 300;
+    transform: translateX(-100%);
+    transition: transform 0.25s ease;
+    box-shadow: 4px 0 20px rgba(0,0,0,0.12);
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+/* ── Global overflow guard ── */
+.main-content > * { max-width: 100%; }
+
+/* Ensure all section-blocks and data tables don't overflow */
+.section-block { overflow: visible; }
+
+.table-scroll-wrap,
+.line-items-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* page-header wraps nicely on mobile */
+@media (max-width: 480px) {
+  .page-header h2 { font-size: 18px; }
+  .page-header { gap: 8px; }
+}

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Dashboard</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+
+    <!-- Header -->
+    <header class="page-header">
+      <div>
+        <h2>Dashboard</h2>
+        <span id="currentDate" class="date-label"></span>
+      </div>
+      <button class="btn-ghost" id="refreshBtn">↻ Refresh</button>
+    </header>
+
+    <!-- KPI Cards -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--blue">▦</div>
+        <span class="kpi-label">Total Products</span>
+        <span class="kpi-value" id="totalProducts"><span class="skeleton"></span></span>
+      </div>
+      <div class="kpi-card kpi-green">
+        <div class="kpi-icon kpi-icon--green">↓</div>
+        <span class="kpi-label">Total Stock Qty</span>
+        <span class="kpi-value" id="totalStockQty"><span class="skeleton"></span></span>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon kpi-icon--amber">↑</div>
+        <span class="kpi-label">Issued Today</span>
+        <span class="kpi-value" id="issuedToday"><span class="skeleton"></span></span>
+      </div>
+      <div class="kpi-card kpi-red">
+        <div class="kpi-icon kpi-icon--red">⚠</div>
+        <span class="kpi-label">Out of Stock</span>
+        <span class="kpi-value" id="lowStockCount"><span class="skeleton"></span></span>
+      </div>
+    </section>
+
+    <!-- Two-column: Recent GRN + Recent Issues -->
+    <div class="dash-two-col">
+
+      <!-- Recent GRN -->
+      <section class="section-block">
+        <div class="section-header">
+          <h3 class="section-title">Recent Stock Received (GRN)</h3>
+          <a href="grn.html" class="section-link">View all →</a>
+        </div>
+        <div class="table-scroll-wrap"><table class="data-table" id="recentGrnTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Date</th>
+              <th>Ref</th>
+            </tr>
+          </thead>
+          <tbody id="recentGrnBody">
+            <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <!-- Recent Issues -->
+      <section class="section-block">
+        <div class="section-header">
+          <h3 class="section-title">Recent Stock Issues</h3>
+          <a href="issue.html" class="section-link">View all →</a>
+        </div>
+        <div class="table-scroll-wrap"><table class="data-table" id="recentIssueTable">
+          <thead>
+            <tr>
+              <th>Product</th>
+              <th>Description</th>
+              <th>Qty</th>
+              <th>Date</th>
+              <th>Ref</th>
+            </tr>
+          </thead>
+          <tbody id="recentIssueBody">
+            <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+    </div>
+
+    <!-- Low Stock Alerts -->
+    <section class="section-block">
+      <div class="section-header">
+        <h3 class="section-title">⚠ Out of Stock Items</h3>
+        <a href="products.html" class="section-link">Manage products →</a>
+      </div>
+      <div class="table-scroll-wrap"><table class="data-table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Product</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="lowStockBody">
+          <tr><td colspan="3" class="table-loading">Loading…</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- Activity Feed -->
+    <section class="section-block">
+      <div class="section-header">
+        <h3 class="section-title">Recent Activity</h3>
+        <a href="history.html" class="section-link">Full history →</a>
+      </div>
+      <ul class="activity-feed" id="activityFeed">
+        <li class="activity-item"><span class="activity-loading">Loading…</span></li>
+      </ul>
+    </section>
+
+  </main>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/print.js"></script>
+  <script src="../js/dashboard.js"></script>
+</body>
+</html>

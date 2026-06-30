@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Settings</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/settings.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Settings</h2>
+    </header>
+
+    <!-- Profile -->
+    <section class="settings-section">
+      <h3 class="settings-heading">Profile</h3>
+      <form id="profileForm" class="settings-form">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Display Name</label>
+            <input type="text" id="displayName" placeholder="Your name" />
+          </div>
+          <div class="field-group">
+            <label>Email</label>
+            <input type="email" id="userEmail" readonly />
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Update Profile</button>
+      </form>
+    </section>
+
+    <!-- Password -->
+    <section class="settings-section">
+      <h3 class="settings-heading">Change Password</h3>
+      <form id="passwordForm" class="settings-form">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Current Password</label>
+            <input type="password" id="currentPassword" placeholder="Your current password" />
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>New Password</label>
+            <input type="password" id="newPassword" placeholder="Min. 8 characters" />
+          </div>
+          <div class="field-group">
+            <label>Confirm Password</label>
+            <input type="password" id="confirmPassword" />
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Change Password</button>
+      </form>
+    </section>
+
+    <!-- Warehouse Config -->
+    <section class="settings-section">
+      <h3 class="settings-heading">Warehouse Configuration</h3>
+      <form id="warehouseForm" class="settings-form">
+        <div class="field-row">
+          <div class="field-group">
+            <label>Warehouse Name</label>
+            <input type="text" id="warehouseName" placeholder="e.g. Main Depot" />
+          </div>
+          <div class="field-group">
+            <label>Currency</label>
+            <select id="currency">
+              <option value="USD">USD — US Dollar</option>
+              <option value="EUR">EUR — Euro</option>
+              <option value="GBP">GBP — British Pound</option>
+              <option value="KES">KES — Kenyan Shilling</option>
+              <option value="NGN">NGN — Nigerian Naira</option>
+              <option value="ZAR">ZAR — South African Rand</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
+          <div class="field-group">
+            <label>Default Low-Stock Threshold</label>
+            <input type="number" id="lowStockDefault" min="0" value="10" />
+          </div>
+          <div class="field-group">
+            <label>GRN Prefix</label>
+            <input type="text" id="grnPrefix" value="GRN-" maxlength="8" />
+          </div>
+        </div>
+        <button type="submit" class="btn-primary">Save Configuration</button>
+      </form>
+    </section>
+
+    <!-- User Management (admin only) -->
+    <section class="settings-section" id="userManagementSection">
+      <h3 class="settings-heading">Team Members</h3>
+      <p class="settings-hint">Invite colleagues and manage their access level.</p>
+
+      <form id="inviteForm" class="settings-form settings-form--inline">
+        <input type="email" id="inviteEmail" placeholder="colleague@company.com" />
+        <select id="inviteRole">
+          <option value="viewer">Viewer</option>
+          <option value="staff">Staff</option>
+          <option value="admin">Admin</option>
+        </select>
+        <button type="submit" class="btn-primary">Send Invite</button>
+      </form>
+
+      <table class="data-table" id="usersTable">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="usersBody">
+          <!-- Populated by settings.js -->
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Danger Zone -->
+    <section class="settings-section settings-section--danger">
+      <h3 class="settings-heading">Danger Zone</h3>
+      <p>Permanently delete all transaction history. This cannot be undone.</p>
+      <button class="btn-danger" id="clearHistoryBtn">Clear All History</button>
+    </section>
+
+  </main>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/settings.js"></script>
+</body>
+</html>

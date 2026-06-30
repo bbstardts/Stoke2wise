@@ -1,0 +1,335 @@
+/*
+ * history.css
+ * ─────────────────────────────────────────────
+ * Purpose: Styles specific to the history/audit page.
+ *
+ * Covers:
+ *   .tx-badge           — action-type pill (GRN / Issue / Adjustment)
+ *   .history-toolbar    — search + filter toolbar row
+ *   .history-search     — text search input
+ *   .history-filter     — action-type <select>
+ *   .history-count      — record count badge
+ *   .table-wrap         — scrollable table container
+ *   .history-table      — improved table styles
+ *   .history-empty      — illustrated empty state
+ *   .date-range / .filter-date / .pagination — kept for legacy compat
+ */
+
+/* ── Action-type pills ── */
+.tx-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+}
+.tx-badge--in       { background: rgba(22,163,74,0.10);  color: var(--color-success); }
+.tx-badge--out      { background: rgba(220,38,38,0.10);  color: var(--color-danger);  }
+.tx-badge--stockout { background: rgba(234,88,12,0.12);  color: #c2410c; }
+.tx-badge--adjust   { background: rgba(217,119,6,0.10);  color: var(--color-warning); }
+.tx-badge--neutral  { background: var(--color-surface-2); color: var(--color-text-muted); }
+
+/* ── Custom date wrapper ── */
+.custom-date-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.date-sep {
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
+/* ── Print History button ── */
+.btn-print-history {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: var(--color-primary, #2563eb);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+.btn-print-history:hover  { opacity: 0.88; }
+.btn-print-history:active { opacity: 0.75; }
+
+/* ── Toolbar ── */
+.history-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+/* Search wrapper (icon + input + clear button) */
+.search-wrap {
+  position: relative;
+  flex: 1 1 220px;
+  min-width: 180px;
+  max-width: 360px;
+}
+.search-icon {
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+.history-search {
+  width: 100%;
+  padding: 8px 32px 8px 32px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color var(--transition);
+}
+.history-search::placeholder { color: var(--color-text-muted); }
+.history-search:focus { border-color: var(--color-primary); }
+
+.clear-search {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--color-text-muted);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+.clear-search svg { width: 15px; height: 15px; }
+.clear-search:hover { color: var(--color-text); }
+
+/* Action-type dropdown */
+.history-filter {
+  padding: 8px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition);
+  min-width: 150px;
+}
+.history-filter:focus { border-color: var(--color-primary); }
+
+/* Record count label */
+.history-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* ── Table wrapper ── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+/* ── Table improvements ── */
+.history-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.history-table thead th {
+  background: var(--color-surface-2);
+  padding: 11px 14px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+  border-bottom: 1px solid var(--color-border);
+  white-space: nowrap;
+}
+.history-table thead th.col-num { text-align: right; }
+
+.history-table tbody tr {
+  border-bottom: 1px solid var(--color-border);
+  transition: background var(--transition);
+}
+.history-table tbody tr:last-child { border-bottom: none; }
+.history-table tbody tr:hover { background: var(--color-surface-2); }
+
+.history-table td {
+  padding: 11px 14px;
+  vertical-align: middle;
+  color: var(--color-text);
+}
+
+/* Column-specific tweaks */
+.product-cell { font-weight: 500; }
+.num-cell     { text-align: right; font-variant-numeric: tabular-nums; }
+.num-cell.muted { color: var(--color-text-muted); }
+.date-cell    { white-space: nowrap; color: var(--color-text-muted); font-size: 12px; }
+
+/* Loading row */
+.table-loading {
+  text-align: center;
+  padding: 28px !important;
+  color: var(--color-text-muted);
+}
+
+/* ── Empty state ── */
+.history-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 56px 24px;
+  text-align: center;
+  color: var(--color-text-muted);
+}
+.history-empty svg {
+  width: 48px;
+  height: 48px;
+  opacity: 0.35;
+}
+.history-empty .empty-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 4px;
+}
+.history-empty .empty-sub {
+  font-size: 13px;
+  max-width: 340px;
+  line-height: 1.6;
+}
+
+/* ── Legacy date-range / pagination (kept for compat) ── */
+.date-range {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+.filter-date {
+  padding: 8px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+}
+.filter-date:focus { border-color: var(--color-primary); }
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding-top: 8px;
+}
+.page-btn {
+  padding: 6px 13px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 13px;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+}
+.page-btn:hover  { color: var(--color-text); border-color: var(--color-text-muted); }
+.page-btn.active {
+  background: rgba(37,99,235,0.10);
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.page-btn:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Totals footer row ── */
+.history-totals-row {
+  background: var(--color-surface-2);
+  border-top: 2px solid var(--color-border);
+}
+.history-totals-row td {
+  padding: 10px 14px;
+  font-size: 12px;
+}
+
+/* ── Category group header row ── */
+.history-category-row td {
+  padding: 9px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #fff;
+  background: var(--color-primary, #2563eb);
+}
+
+/* ── Category subtotal row ── */
+.history-category-subtotal-row {
+  background: rgba(37,99,235,0.05);
+  border-top: 1px dashed var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+.history-category-subtotal-row td {
+  padding: 8px 14px;
+  font-size: 12px;
+}
+.totals-label {
+  color: var(--color-text-muted);
+  font-weight: 600;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+.totals-chip {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  margin-right: 4px;
+}
+.totals-chip--in  { background: rgba(22,163,74,0.12); color: var(--color-success); }
+.totals-chip--out { background: rgba(220,38,38,0.10); color: var(--color-danger);  }
+
+/* ── Skeleton loading ── */
+@keyframes shimmer {
+  0%   { background-position: -600px 0; }
+  100% { background-position:  600px 0; }
+}
+.skeleton {
+  display: inline-block;
+  height: 13px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 600px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+.skeleton-text { height: 12px; border-radius: 4px; display: block; }
+.skeleton-pill { height: 20px; width: 64px; border-radius: 20px; display: block; }
+.skeleton-row td { padding: 13px 14px; }

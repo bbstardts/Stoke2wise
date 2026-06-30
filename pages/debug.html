@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise Debug</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; background: #f3f4f6; }
+    h2 { margin-bottom: 16px; }
+    .box { background: #fff; border-radius: 8px; padding: 16px; margin-bottom: 16px; border: 1px solid #e5e7eb; }
+    .ok   { color: #166534; font-weight: 700; }
+    .err  { color: #991b1b; font-weight: 700; }
+    .info { color: #1d4ed8; }
+    pre { font-size: 12px; background: #f9fafb; padding: 10px; border-radius: 6px; overflow-x: auto; white-space: pre-wrap; word-break: break-all; }
+    button { padding: 10px 20px; background: #2563eb; color: #fff; border: none; border-radius: 6px; font-size: 14px; cursor: pointer; width: 100%; }
+  </style>
+</head>
+<body>
+  <h2>🔍 StockWise Debug</h2>
+  <button onclick="runTests()">Run Tests</button>
+  <div id="output" style="margin-top:16px"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+
+  <script>
+    async function runTests() {
+      const out = document.getElementById('output');
+      out.innerHTML = '<div class="box info">Running tests…</div>';
+      const db = window.firebaseDb;
+      let html = '';
+
+      // Test 1: Firebase connected
+      html += box('1. Firebase Connected', '<span class="ok">✓ Yes</span>');
+
+      // Test 2: Auth state
+      try {
+        const user = await new Promise(res => firebase.auth().onAuthStateChanged(res));
+        if (user) {
+          html += box('2. Auth / Login', `<span class="ok">✓ Logged in as: ${user.email || user.uid}</span>`);
+        } else {
+          html += box('2. Auth / Login', `<span class="err">✗ NOT logged in — this is likely why data won't load (Firestore rules block unauthenticated access)</span>`);
+        }
+      } catch(e) {
+        html += box('2. Auth', `<span class="err">Error: ${e.message}</span>`);
+      }
+
+      // Test 3: Read products
+      try {
+        const snap = await db.collection('products').limit(3).get();
+        if (snap.empty) {
+          html += box('3. Products Collection', `<span class="err">✗ Empty — no products found in Firestore</span>`);
+        } else {
+          const sample = snap.docs.map(d => JSON.stringify({id:d.id,...d.data()}, null, 2)).join('\n\n');
+          html += box('3. Products Collection', `<span class="ok">✓ Found ${snap.size} product(s)</span><pre>${sample}</pre>`);
+        }
+      } catch(e) {
+        html += box('3. Products Collection', `<span class="err">✗ Error: ${e.message}</span>`);
+      }
+
+      // Test 4: Read transactions
+      try {
+        const snap = await db.collection('transactions').limit(3).get();
+        if (snap.empty) {
+          html += box('4. Transactions Collection', `<span class="err">✗ Empty — no transactions found</span>`);
+        } else {
+          const sample = snap.docs.map(d => JSON.stringify({id:d.id,...d.data()}, null, 2)).join('\n\n');
+          html += box('4. Transactions Collection', `<span class="ok">✓ Found ${snap.size} transaction(s)</span><pre>${sample}</pre>`);
+        }
+      } catch(e) {
+        html += box('4. Transactions Collection', `<span class="err">✗ Error: ${e.message}</span>`);
+      }
+
+      // Test 5: Read history
+      try {
+        const snap = await db.collection('history').limit(3).get();
+        if (snap.empty) {
+          html += box('5. History Collection', `<span class="err">✗ Empty — no history records</span>`);
+        } else {
+          html += box('5. History Collection', `<span class="ok">✓ Found ${snap.size} record(s)</span>`);
+        }
+      } catch(e) {
+        html += box('5. History Collection', `<span class="err">✗ Error: ${e.message}</span>`);
+      }
+
+      out.innerHTML = html;
+    }
+
+    function box(title, content) {
+      return `<div class="box"><strong>${title}</strong><br><br>${content}</div>`;
+    }
+  </script>
+</body>
+</html>

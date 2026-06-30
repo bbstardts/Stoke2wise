@@ -1,0 +1,231 @@
+/*
+ * products.css
+ * ─────────────────────────────────────────────
+ * Product management page — image upload, stats row,
+ * thumbnails, lightbox, category badges, stock badges.
+ */
+
+/* ── Stats Row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+.stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  color: var(--color-text);
+}
+.stat-card--ok     .stat-value { color: var(--color-success); }
+.stat-card--warn   .stat-value { color: var(--color-warning); }
+.stat-card--danger .stat-value { color: var(--color-danger);  }
+
+/* ── Table Wrapper ── */
+.table-wrap { overflow-x: auto; padding: 0; }
+.data-table { min-width: 700px; }
+
+/* ── Table Cells ── */
+.td-img  { width: 62px; padding: 8px 10px !important; }
+.td-name { font-weight: 600; }
+.td-bin  { font-size: 12px; }
+.td-desc { max-width: 200px; font-size: 12px; color: var(--color-text-muted); }
+
+.thumb {
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  cursor: pointer;
+  transition: opacity var(--transition), transform var(--transition);
+  display: block;
+}
+.thumb:hover { opacity: 0.85; transform: scale(1.05); }
+
+.no-img {
+  color: var(--color-text-muted);
+  font-size: 18px;
+}
+
+/* ── Category Badge ── */
+.cat-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(37,99,235,0.08);
+  color: var(--color-primary);
+}
+
+/* ── Stock Badges ── */
+.stock-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.stock-badge--ok    { background: rgba(22,163,74,0.1);  color: var(--color-success); }
+.stock-badge--low   { background: rgba(217,119,6,0.1);  color: var(--color-warning); }
+.stock-badge--empty { background: rgba(220,38,38,0.1);  color: var(--color-danger);  }
+
+/* ── Row Actions ── */
+.action-btns { display: flex; gap: 6px; }
+.action-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.action-btn:hover             { color: var(--color-text); border-color: var(--color-text-muted); }
+.action-btn--danger:hover     { color: var(--color-danger); border-color: var(--color-danger); }
+
+/* ── Image Upload Area ── */
+.image-upload-area {
+  position: relative;
+  border: 2px dashed var(--color-border);
+  border-radius: var(--radius);
+  min-height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  overflow: hidden;
+  transition: border-color var(--transition), background var(--transition);
+}
+.image-upload-area:hover,
+.image-upload-area.drag-over {
+  border-color: var(--color-primary);
+  background: rgba(37,99,235,0.03);
+}
+
+.upload-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  padding: 20px;
+  text-align: center;
+}
+.upload-icon   { font-size: 32px; }
+.upload-placeholder span { font-size: 13px; color: var(--color-text-muted); }
+.upload-hint   { font-size: 11px !important; }
+
+.image-preview {
+  width: 100%;
+  max-height: 200px;
+  object-fit: contain;
+  display: block;
+  pointer-events: none;
+}
+
+/* ── Upload Progress ── */
+.upload-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+.progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: 4px;
+  transition: width 0.2s ease;
+}
+#progressLabel { font-size: 11px; color: var(--color-text-muted); white-space: nowrap; }
+
+/* ── Spinner ── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Lightbox ── */
+.lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+  backdrop-filter: blur(6px);
+}
+.lightbox img {
+  max-width: 90vw;
+  max-height: 88vh;
+  border-radius: var(--radius);
+  object-fit: contain;
+  box-shadow: 0 8px 48px rgba(0,0,0,0.5);
+}
+.lightbox-close {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff;
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition);
+}
+.lightbox-close:hover { background: rgba(255,255,255,0.25); }
+
+/* ── Bin location code ── */
+td code {
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text);
+}

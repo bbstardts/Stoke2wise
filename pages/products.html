@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Products</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/products.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>📦 Products</h2>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-ghost" id="printReportBtn"
+                onclick="printCurrentReport()"
+                style="font-size:13px;padding:6px 14px;">🖨 Print Report</button>
+        <button class="btn-primary" id="addProductBtn">+ Add Product</button>
+      </div>
+    </header>
+
+    <!-- Search & Filter Bar -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category…" />
+      <select id="categoryFilter" class="filter-select">
+        <option value="">All Categories</option>
+      </select>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-label">Total Products</span>
+        <span class="stat-value" id="statTotal">0</span>
+      </div>
+      <div class="stat-card stat-card--ok">
+        <span class="stat-label">In Stock</span>
+        <span class="stat-value" id="statInStock">0</span>
+      </div>
+      <div class="stat-card stat-card--danger">
+        <span class="stat-label">Out of Stock</span>
+        <span class="stat-value" id="statOut">0</span>
+      </div>
+    </div>
+
+    <!-- Products Table -->
+    <div class="section-block table-wrap">
+      <table class="data-table" id="productsTable">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Product Name</th>
+            <th>Description</th>
+            <th>Current Stock</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="productsBody"></tbody>
+      </table>
+      <p id="emptyState" class="empty-state hidden">No products found. Click <strong>+ Add Product</strong> to get started.</p>
+    </div>
+  </main>
+
+  <!-- ── Add / Edit Modal ── -->
+  <div id="productModal" class="modal hidden">
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Product</h3>
+        <button class="modal-close" id="closeModal">✕</button>
+      </div>
+
+      <form id="productForm" class="modal-form">
+        <input type="hidden" id="productId" />
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Category *</label>
+            <input type="text" id="category" required placeholder="e.g. Tractor, Food, Chemicals" list="categoryList" />
+            <datalist id="categoryList"></datalist>
+          </div>
+          <div class="field-group">
+            <label>Product Name *</label>
+            <input type="text" id="productName" required placeholder="e.g. Engine Oil 5W-30" />
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label>Description</label>
+          <textarea id="description" rows="2" placeholder="Optional product notes…"></textarea>
+        </div>
+
+        <div class="field-group" style="max-width:200px">
+          <label>Current Stock *</label>
+          <input type="number" id="quantity" min="0" value="0" required />
+        </div>
+
+        <div id="formError" class="error-msg hidden"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveBtn">
+            <span id="saveBtnText">Save Product</span>
+            <span id="saveBtnSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/print.js"></script>
+  <script src="../js/products.js"></script>
+</body>
+</html>

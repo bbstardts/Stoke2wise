@@ -1,0 +1,212 @@
+/*
+ * dashboard.css
+ * Styles for dashboard KPI cards, two-column layout,
+ * activity feed, badges, and skeleton loaders.
+ */
+
+/* ── KPI Grid ── */
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 14px;
+}
+
+.kpi-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  border-left: 3px solid var(--color-border);
+  transition: box-shadow var(--transition), border-color var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+.kpi-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-left-color: var(--color-primary);
+}
+.kpi-green { border-left-color: var(--color-success); }
+.kpi-amber { border-left-color: var(--color-warning); }
+.kpi-red   { border-left-color: var(--color-danger);  }
+
+.kpi-icon {
+  font-size: 18px;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 4px;
+}
+.kpi-icon--blue  { background: rgba(37,99,235,0.1);  color: var(--color-primary); }
+.kpi-icon--green { background: rgba(22,163,74,0.1);  color: var(--color-success); }
+.kpi-icon--amber { background: rgba(217,119,6,0.1);  color: var(--color-warning); }
+.kpi-icon--red   { background: rgba(220,38,38,0.1);  color: var(--color-danger);  }
+
+.kpi-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+}
+.kpi-value {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  min-height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+/* ── Skeleton loader ── */
+.skeleton {
+  display: inline-block;
+  width: 60px;
+  height: 32px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+@keyframes shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ── Two-column layout ── */
+.dash-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+@media (max-width: 960px) {
+  .dash-two-col { grid-template-columns: 1fr; }
+}
+
+/* ── Section header (title + link row) ── */
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.section-header .section-title { margin-bottom: 0; }
+.section-link {
+  font-size: 12px;
+  color: var(--color-primary);
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.section-link:hover { text-decoration: underline; }
+
+/* ── Table helpers ── */
+.table-loading,
+.table-empty {
+  text-align: center;
+  color: var(--color-text-muted);
+  padding: 24px 14px !important;
+  font-size: 13px;
+}
+.ref-cell {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+
+/* ── Qty badges ── */
+.qty-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+.qty-badge--in  {
+  background: rgba(22,163,74,0.1);
+  color: var(--color-success);
+}
+.qty-badge--out {
+  background: rgba(220,38,38,0.1);
+  color: var(--color-danger);
+}
+
+/* ── Status badges ── */
+.status-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.badge--warning {
+  background: rgba(217,119,6,0.1);
+  color: var(--color-warning);
+}
+.badge--danger {
+  background: rgba(220,38,38,0.1);
+  color: var(--color-danger);
+}
+
+/* ── Activity Feed ── */
+.activity-feed {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--color-border);
+}
+.activity-item:last-child { border-bottom: none; }
+
+.activity-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-top: 5px;
+}
+.activity-dot--in  { background: var(--color-success); }
+.activity-dot--out { background: var(--color-danger);  }
+
+.activity-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+.activity-text { font-size: 13px; color: var(--color-text); }
+.activity-meta {
+  font-size: 11px;
+  color: var(--color-text-muted);
+}
+.activity-loading {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+/* ── Category badge (out of stock table) ── */
+.cat-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--color-surface-2);
+  border: 1px solid var(--color-border);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

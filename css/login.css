@@ -1,0 +1,83 @@
+/*
+ * login.css
+ * ─────────────────────────────────────────────
+ * Purpose: Styles specific to the login page (index.html).
+ *
+ * Covers:
+ *   .login-page         — full-page centered layout
+ *   .login-card         — white card containing the form
+ *   .login-brand        — logo + app name block
+ *   .login-form         — stacked form layout
+ *
+ * Note: Buttons and .field-group come from global.css.
+ *       This file only adds login-specific overrides.
+ */
+
+.login-page {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background:
+    radial-gradient(ellipse at 60% 0%, rgba(37,99,235,0.08) 0%, transparent 60%),
+    var(--color-bg);
+}
+
+.login-card {
+  width: min(400px, 95vw);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  box-shadow: var(--shadow);
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.login-brand .brand-icon {
+  display: block;
+  font-size: 36px;
+  margin-bottom: 8px;
+  color: var(--color-primary);
+}
+.login-brand h1 {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 4px;
+}
+.login-brand p {
+  font-size: 12px;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.login-form .btn-primary {
+  width: 100%;
+  justify-content: center;
+  padding: 12px;
+  font-size: 14px;
+  margin-top: 6px;
+}
+
+.auth-switch {
+  text-align: center;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.auth-switch a {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.auth-switch a:hover {
+  text-decoration: underline;
+}
