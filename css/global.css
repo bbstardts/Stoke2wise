@@ -252,6 +252,25 @@ html, body {
 }
 
 /* ── Status / Feedback ── */
+.success-msg {
+  color: var(--color-success);
+  font-size: 12px;
+  padding: 8px 12px;
+  background: rgba(22,163,74,0.08);
+  border-radius: var(--radius-sm);
+  border-left: 3px solid var(--color-success);
+}
+
+.status-pill {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+}
+.status-pill--pending { background: rgba(217,119,6,0.12); color: #B45309; }
+.status-pill--active  { background: rgba(22,163,74,0.12); color: var(--color-success); }
+
 .error-msg {
   color: var(--color-danger);
   font-size: 12px;

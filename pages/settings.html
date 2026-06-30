@@ -61,7 +61,7 @@
     </section>
 
     <!-- Warehouse Config -->
-    <section class="settings-section">
+    <section class="settings-section" data-min-role="staff">
       <h3 class="settings-heading">Warehouse Configuration</h3>
       <form id="warehouseForm" class="settings-form">
         <div class="field-row">
@@ -96,9 +96,9 @@
     </section>
 
     <!-- User Management (admin only) -->
-    <section class="settings-section" id="userManagementSection">
+    <section class="settings-section" id="userManagementSection" data-min-role="admin">
       <h3 class="settings-heading">Team Members</h3>
-      <p class="settings-hint">Invite colleagues and manage their access level.</p>
+      <p class="settings-hint">New signups appear here as <strong>Pending</strong> — click Approve to grant access. You can also pre-authorize an email with a role below before they sign up.</p>
 
       <form id="inviteForm" class="settings-form settings-form--inline">
         <input type="email" id="inviteEmail" placeholder="colleague@company.com" />
@@ -126,7 +126,7 @@
     </section>
 
     <!-- Danger Zone -->
-    <section class="settings-section settings-section--danger">
+    <section class="settings-section settings-section--danger" data-min-role="admin">
       <h3 class="settings-heading">Danger Zone</h3>
       <p>Permanently delete all transaction history. This cannot be undone.</p>
       <button class="btn-danger" id="clearHistoryBtn">Clear All History</button>
@@ -139,8 +139,18 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+  <!-- EmailJS: sends the user an email once their account is approved -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="../js/notify-config.js"></script>
+  <script>
+    if (window.NOTIFY_CONFIG && window.NOTIFY_CONFIG.enabled && typeof emailjs !== 'undefined') {
+      emailjs.init(window.NOTIFY_CONFIG.publicKey);
+    }
+  </script>
+
   <script src="../js/firebase-config.js"></script>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
   <script src="../js/sidebar.js"></script>
   <script src="../js/settings.js"></script>
 </body>

@@ -135,17 +135,31 @@ async function loadUsers() {
     }
     tbody.innerHTML = snap.docs.map(doc => {
       const u = doc.data();
+      const isPending  = u.status === 'pending' || u.approved === false;
+      const isInviteOnly = u.status === 'invited'; // placeholder row, no real account yet
+      const statusPill = isInviteOnly
+        ? `<span class="status-pill" style="background:rgba(37,99,235,0.1);color:var(--color-primary)">Invited</span>`
+        : isPending
+          ? `<span class="status-pill status-pill--pending">Pending</span>`
+          : `<span class="status-pill status-pill--active">Active</span>`;
+
+      const approveBtn = isPending && !isInviteOnly
+        ? `<button class="btn-primary" style="margin-right:8px;font-size:12px;padding:6px 12px" onclick="approveUser('${doc.id}')">Approve</button>`
+        : '';
+
       return `<tr>
         <td>${u.displayName || '—'}</td>
-        <td>${u.email || '—'}</td>
-        <td>${u.role || '—'}</td>
+        <td>${u.email || '—'} ${statusPill}</td>
         <td>
-          <select onchange="changeRole('${doc.id}', this.value)">
+          <select onchange="changeRole('${doc.id}', this.value)" ${isInviteOnly ? 'disabled' : ''}>
             <option value="viewer"  ${u.role==='viewer'  ? 'selected':''}>Viewer</option>
             <option value="staff"   ${u.role==='staff'   ? 'selected':''}>Staff</option>
             <option value="admin"   ${u.role==='admin'   ? 'selected':''}>Admin</option>
           </select>
-          <button class="btn-ghost" style="margin-left:8px;font-size:12px" onclick="removeUser('${doc.id}')">Remove</button>
+        </td>
+        <td>
+          ${approveBtn}
+          <button class="btn-ghost" style="font-size:12px" onclick="removeUser('${doc.id}')">Remove</button>
         </td>
       </tr>`;
     }).join('');
@@ -170,6 +184,38 @@ async function sendInvite(e) {
     loadUsers();
   } catch (err) {
     alert('Failed to send invite: ' + err.message);
+  }
+}
+
+async function approveUser(uid) {
+  try {
+    const docRef = window.firebaseDb.collection('users').doc(uid);
+    const doc = await docRef.get();
+    const u = doc.exists ? doc.data() : {};
+
+    await docRef.update({
+      approved: true,
+      status: 'active',
+    });
+
+    notifyUserOfApproval(u.displayName, u.email);
+
+    loadUsers();
+  } catch (err) {
+    alert('Failed to approve user: ' + err.message);
+  }
+}
+
+function notifyUserOfApproval(name, email) {
+  const cfg = window.NOTIFY_CONFIG;
+  if (!cfg || !cfg.enabled || !cfg.approvedTemplateId || cfg.approvedTemplateId.startsWith('YOUR_') || typeof emailjs === 'undefined') return;
+  try {
+    emailjs.send(cfg.serviceId, cfg.approvedTemplateId, {
+      user_name:  name || 'there',
+      to_email:   email,
+    }, cfg.publicKey).catch((err) => console.warn('User approval email failed:', err));
+  } catch (err) {
+    console.warn('User approval email failed:', err);
   }
 }
 

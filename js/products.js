@@ -144,6 +144,13 @@ function renderTable(products) {
     const qty        = p.qty ?? 0;
     const badgeClass = qty <= 0 ? 'stock-badge--empty' : 'stock-badge--ok';
     const desc       = p.description || '';
+    const canEdit    = window.currentUserRole !== 'viewer';
+    const actionsCell = canEdit
+      ? `<div class="action-btns">
+            <button class="action-btn" onclick="openModal('${p.id}')">✏ Edit</button>
+            <button class="action-btn action-btn--danger" onclick="deleteProduct('${p.id}')">🗑 Delete</button>
+          </div>`
+      : `<span style="color:var(--color-text-muted);font-size:12px">View only</span>`;
 
     return `
       <tr>
@@ -151,12 +158,7 @@ function renderTable(products) {
         <td class="td-name">${escHtml(p.name)}</td>
         <td class="td-desc">${desc ? `<span title="${escHtml(desc)}">${escHtml(desc.slice(0,60))}${desc.length > 60 ? '…' : ''}</span>` : '—'}</td>
         <td><span class="stock-badge ${badgeClass}">${qty}</span></td>
-        <td>
-          <div class="action-btns">
-            <button class="action-btn" onclick="openModal('${p.id}')">✏ Edit</button>
-            <button class="action-btn action-btn--danger" onclick="deleteProduct('${p.id}')">🗑 Delete</button>
-          </div>
-        </td>
+        <td>${actionsCell}</td>
       </tr>`;
   }).join('');
 }

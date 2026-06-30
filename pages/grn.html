@@ -56,7 +56,7 @@
       <h2>Receive Stock <span class="page-tag">GRN</span></h2>
     </header>
 
-    <div class="form-card">
+    <div class="form-card" data-min-role="staff">
       <form id="grnForm">
 
         <!-- Items Received -->
@@ -86,7 +86,7 @@
 
         <div class="form-actions">
           <button type="button" class="btn-ghost" id="resetGrn">Clear Form</button>
-          <button type="submit" class="btn-primary">Submit GRN</button>
+          <button type="submit" class="btn-primary" id="submitGrn">Submit GRN</button>
         </div>
       </form>
     </div>
@@ -148,7 +148,9 @@
 
   <script src="../js/firebase-config.js"></script>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
   <script src="../js/sidebar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
   <script src="../js/print.js"></script>
   <script src="../js/grn.js"></script>
 </body>

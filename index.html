@@ -31,8 +31,32 @@
     </form>
 
     <p class="auth-switch">
+      <a href="#" id="forgotPasswordLink">Forgot password?</a>
+    </p>
+
+    <p class="auth-switch">
       Don't have an account? <a href="register.html">Create one</a>
     </p>
+  </div>
+
+  <!-- Forgot Password Modal -->
+  <div class="modal hidden" id="forgotModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Reset your password</h3>
+        <button type="button" class="modal-close" id="forgotClose">&times;</button>
+      </div>
+      <form id="forgotForm" class="modal-form">
+        <div class="field-group">
+          <label for="forgotEmail">Email</label>
+          <input type="email" id="forgotEmail" placeholder="you@company.com" required autocomplete="email" />
+        </div>
+        <div id="forgotMsg" class="error-msg hidden"></div>
+        <div class="modal-actions">
+          <button type="submit" class="btn-primary" id="forgotBtn">Send Reset Link</button>
+        </div>
+      </form>
+    </div>
   </div>
 
   <!-- Firebase SDK (Compat v9) -->
@@ -42,5 +66,17 @@
 
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
+
+  <script>
+    // Show a friendly banner if redirected here because an account is pending approval
+    document.addEventListener('DOMContentLoaded', () => {
+      if (new URLSearchParams(window.location.search).get('pending') === '1') {
+        const box = document.getElementById('loginError');
+        box.className = 'error-msg';
+        box.textContent = 'Your account is awaiting admin approval. You will be able to sign in once it has been approved.';
+        box.classList.remove('hidden');
+      }
+    });
+  </script>
 </body>
 </html>

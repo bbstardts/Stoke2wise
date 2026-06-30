@@ -41,33 +41,60 @@ function buildItemRows(items) {
     </tr>`).join('');
 }
 
-/** Opens a print-ready page in new tab. User taps Print → Save as PDF. Works on all devices. */
-function printViaIframe(html) {
-  // Inject auto-print script into the HTML
-  const printHtml = html.replace('</body>', `
-  <script>
-    window.onload = function() {
-      window.focus();
-      setTimeout(function() { window.print(); }, 500);
-    };
-  <\/script>
-  </body>`);
-
-  const blob = new Blob([printHtml], { type: 'text/html' });
-  const url  = URL.createObjectURL(blob);
-  const win  = window.open(url, '_blank');
-
-  // If popup blocked, fallback: download HTML file
-  if (!win) {
+/**
+ * Renders the given HTML to an actual .pdf file and downloads it directly —
+ * no print dialog, no "Save as PDF" step. Uses html2pdf.js (must be loaded
+ * via <script> tag on the page before this file).
+ *
+ * @param {string} html      — full HTML document string (as built by the report functions)
+ * @param {string} filename  — desired download filename, e.g. "GRN-0010.pdf"
+ */
+function printViaIframe(html, filename) {
+  if (typeof html2pdf === 'undefined') {
+    console.error('html2pdf.js is not loaded — add the html2pdf <script> tag to this page.');
+    const blob = new Blob([html], { type: 'text/html' });
+    const url  = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href     = url;
-    a.download = 'stockwise-report.html';
+    a.download = (filename || 'stockwise-report').replace(/\.pdf$/i, '') + '.html';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    return;
   }
 
-  setTimeout(() => URL.revokeObjectURL(url), 30000);
+  // Render the HTML off-screen so we can hand it to html2pdf
+  const container = document.createElement('div');
+  container.style.position = 'fixed';
+  container.style.left = '-99999px';
+  container.style.top  = '0';
+  container.innerHTML  = html;
+  document.body.appendChild(container);
+
+  // The report HTML is a full document (has its own <style>); html2pdf just
+  // needs the body content, so grab the .receipt / .page wrapper if present.
+  const target = container.querySelector('.receipt, .page') || container;
+
+  const opt = {
+    margin:       0,
+    filename:     filename || 'stockwise-report.pdf',
+    image:        { type: 'jpeg', quality: 0.98 },
+    html2canvas:  { scale: 2, useCORS: true },
+    jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+  };
+
+  // Use landscape automatically for the wide Excel-style reports
+  if (html.includes('size:A4 landscape')) {
+    opt.jsPDF.orientation = 'landscape';
+  }
+
+  html2pdf().set(opt).from(target).save().then(() => {
+    document.body.removeChild(container);
+  }).catch((err) => {
+    console.error('PDF generation failed:', err);
+    document.body.removeChild(container);
+  });
 }
 
 /* ─── Receipt shell CSS ──────────────────────────────────────────────────── */
@@ -372,7 +399,7 @@ window.printGrnReceipt = function(g) {
 </body>
 </html>`;
 
-  printViaIframe(html);
+  printViaIframe(html, `${g.grnNumber || 'GRN'}.pdf`);
 };
 
 /* ─── Issue Receipt ───────────────────────────────────────────────────────── */
@@ -492,7 +519,7 @@ window.printIssueReceipt = function(iss) {
 </body>
 </html>`;
 
-  printViaIframe(html);
+  printViaIframe(html, `${iss.issueNumber || 'Issue'}.pdf`);
 };
 
 /* ─── Product Report ──────────────────────────────────────────────────────── */
@@ -696,7 +723,7 @@ window.printProductReport = function(products, opts = {}) {
 </body>
 </html>`;
 
-  printViaIframe(html);
+  printViaIframe(html, `${title.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
 };
 
 /* helpers local to Product Report */
@@ -917,7 +944,7 @@ window.printRecentTransactionsReport = function(records, opts = {}) {
 </body>
 </html>`;
 
-  printViaIframe(html);
+  printViaIframe(html, `${reportTitle.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
 };
 
 window.printHistoryReport = function(records, meta = {}) {
@@ -1134,5 +1161,5 @@ window.printHistoryReport = function(records, meta = {}) {
 </body>
 </html>`;
 
-  printViaIframe(html);
+  printViaIframe(html, `History-Report-${new Date().toISOString().slice(0,10)}.pdf`);
 };
