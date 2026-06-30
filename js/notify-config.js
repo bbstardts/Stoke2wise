@@ -39,6 +39,6 @@ window.NOTIFY_CONFIG = {
   serviceId:        'service_tk6m5jf',
   templateId:        'template_ol2g4tm',   // sent to YOU when someone signs up
   approvedTemplateId: 'YOUR_APPROVED_TEMPLATE_ID', // sent to the USER when you approve them
-  publicKey:         'Xt-yxZBrQ9OEIoHlv15e5',
+  publicKey:         '50KxzleCHG_NBuQWl',
   adminEmail:        'bbstarbobola@gmail.com',
 };
