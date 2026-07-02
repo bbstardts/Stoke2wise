@@ -2,6 +2,7 @@
   const NAV_ITEMS = [
     { icon: '▦',  label: 'Dashboard', href: 'dashboard.html' },
     { icon: '☰',  label: 'Products',  href: 'products.html'  },
+    { icon: '฿',  label: 'Pricing',   href: 'pricing.html'   },
     { icon: '▤',  label: 'Suppliers', href: 'suppliers.html' },
     { icon: '↓',  label: 'Receive',   href: 'grn.html'       },
     { icon: '↑',  label: 'Issue',     href: 'issue.html'     },

@@ -34,6 +34,10 @@ document.addEventListener('DOMContentLoaded', () => {
   categoryFilter.addEventListener('change', filterProducts);
   productForm.addEventListener('submit',   handleFormSubmit);
   loadProducts();
+
+  // Re-render once the user's role is confirmed, so viewers never see
+  // Edit/Delete buttons flash before the role check is ready.
+  document.addEventListener('roleReady', () => renderTable(allProducts));
 });
 
 // ── Firestore ─────────────────────────────────────────────────────────────────

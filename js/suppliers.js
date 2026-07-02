@@ -31,6 +31,10 @@ document.addEventListener('DOMContentLoaded', () => {
   searchInput.addEventListener('input',    filterSuppliers);
   supplierForm.addEventListener('submit',  handleFormSubmit);
   loadSuppliers();
+
+  // Re-render once the user's role is confirmed, so viewers never see
+  // Edit/Delete buttons flash before the role check is ready.
+  document.addEventListener('roleReady', () => renderTable(allSuppliers));
 });
 
 // ── Firestore ─────────────────────────────────────────────────────────────

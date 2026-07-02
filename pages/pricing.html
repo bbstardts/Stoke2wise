@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Pricing</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/pricing.css" />
+  <link rel="stylesheet" href="../css/history.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Pricing</h2>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <span id="rateStatus" class="rate-status">Rates up to date</span>
+        <button class="btn-primary" id="addPriceBtn" data-min-role="staff">+ Add Price</button>
+      </div>
+    </header>
+
+    <!-- Search & Sort Bar -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name or category…" />
+      <select id="categoryFilter" class="filter-select">
+        <option value="">All Categories</option>
+      </select>
+      <select id="sortSelect" class="filter-select">
+        <option value="name-asc">Name (A–Z)</option>
+        <option value="name-desc">Name (Z–A)</option>
+        <option value="price-asc">Price (Low → High)</option>
+        <option value="price-desc">Price (High → Low)</option>
+      </select>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <span class="stat-label">Priced Products</span>
+        <span class="stat-value" id="statPriced">0</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Unpriced Products</span>
+        <span class="stat-value" id="statUnpriced">0</span>
+      </div>
+      <div class="stat-card stat-card--ok">
+        <span class="stat-label">Total Inventory Value</span>
+        <span class="stat-value" id="statTotalValue">—</span>
+      </div>
+      <div class="stat-card">
+        <span class="stat-label">Currency</span>
+        <span class="stat-value" id="statCurrency">USD</span>
+      </div>
+    </div>
+
+    <!-- Pricing Table -->
+    <div class="section-block table-wrap">
+      <table class="data-table" id="pricingTable">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th>Product Name</th>
+            <th>Stock Qty</th>
+            <th>Unit Price</th>
+            <th>Total Value</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="pricingBody"></tbody>
+      </table>
+      <p id="emptyState" class="empty-state hidden">No products found. Click <strong>+ Add Price</strong> to get started.</p>
+    </div>
+
+    <!-- Pagination -->
+    <div class="pagination-bar" id="paginationBar">
+      <button class="btn-ghost" id="prevPageBtn">‹ Prev</button>
+      <span id="pageIndicator">Page 1</span>
+      <button class="btn-ghost" id="nextPageBtn">Next ›</button>
+    </div>
+
+    <!-- Recent Price Changes -->
+    <div class="form-card" style="margin-top:24px">
+    <section class="section-block">
+      <div class="section-header-row">
+        <h3 class="section-title">Recent Price Changes</h3>
+      </div>
+      <div class="table-scroll-wrap" style="max-height:400px;overflow-y:auto;">
+        <table class="data-table history-table" id="recentPriceChangesTable">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Category</th>
+              <th>Product</th>
+              <th>Change</th>
+              <th>Changed By</th>
+            </tr>
+          </thead>
+          <tbody id="recentPriceChangesBody">
+            <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <!-- ── Add / Edit Price Modal ── -->
+  <div id="priceModal" class="modal hidden">
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Price</h3>
+        <button class="modal-close" id="closeModal">✕</button>
+      </div>
+
+      <form id="priceForm" class="modal-form">
+        <input type="hidden" id="priceDocId" />
+        <input type="hidden" id="linkedProductId" />
+
+        <div class="field-group" id="existingProductField">
+          <label>Product</label>
+          <select id="existingProductSelect">
+            <option value="">— Type a new product name below instead —</option>
+          </select>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Category *</label>
+            <input type="text" id="category" required placeholder="e.g. Tractor, Food, Chemicals" list="categoryList" />
+            <datalist id="categoryList"></datalist>
+          </div>
+          <div class="field-group">
+            <label>Product Name *</label>
+            <input type="text" id="productName" required placeholder="e.g. Engine Oil 5W-30" />
+          </div>
+        </div>
+
+        <div class="field-row">
+          <div class="field-group" style="max-width:220px">
+            <label>Price (USD) *</label>
+            <input type="number" id="priceUSD" min="0" step="0.01" required placeholder="0.00" />
+            <span class="field-hint">Stored in USD; converts automatically to your display currency.</span>
+          </div>
+          <div class="field-group" style="max-width:220px">
+            <label>Preview in <span id="previewCurrencyLabel">USD</span></label>
+            <input type="text" id="pricePreview" readonly placeholder="—" />
+          </div>
+        </div>
+
+        <div id="formError" class="error-msg hidden"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveBtn">
+            <span id="saveBtnText">Save Price</span>
+            <span id="saveBtnSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/currency.js"></script>
+  <script src="../js/pricing.js"></script>
+</body>
+</html>

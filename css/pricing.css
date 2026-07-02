@@ -1,0 +1,147 @@
+/*
+ * pricing.css
+ * ─────────────────────────────────────────────
+ * Pricing page — stats row, price badges, rate status,
+ * pagination. Reuses tokens/components from global.css
+ * and structural patterns from products.css.
+ */
+
+/* ── Stats Row ── */
+.stats-row {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+@media (max-width: 900px) { .stats-row { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 500px) { .stats-row { grid-template-columns: 1fr 1fr; } }
+
+.stat-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.stat-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--color-text-muted);
+}
+.stat-value {
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--color-text);
+}
+.stat-card--ok .stat-value { color: var(--color-success); }
+
+/* ── Toolbar (extends layout's .toolbar with a 3rd control) ── */
+.toolbar { display: flex; gap: 10px; flex-wrap: wrap; }
+.filter-select {
+  padding: 9px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 13px;
+  font-family: var(--font-body);
+}
+
+/* ── Rate status pill ── */
+.rate-status {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-success);
+  background: rgba(22,163,74,0.08);
+  padding: 5px 10px;
+  border-radius: 20px;
+  white-space: nowrap;
+}
+.rate-status--stale {
+  color: var(--color-warning);
+  background: rgba(217,119,6,0.1);
+}
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; padding: 0; }
+.data-table { min-width: 700px; }
+.td-name { font-weight: 600; }
+.cat-badge {
+  display: inline-block;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 600;
+  background: rgba(37,99,235,0.08);
+  color: var(--color-primary);
+}
+.cell-muted { color: var(--color-text-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Price badges ── */
+.price-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  background: rgba(22,163,74,0.1);
+  color: var(--color-success);
+}
+.price-badge--unset {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  font-weight: 600;
+}
+
+/* ── Row actions ── */
+.action-btns { display: flex; gap: 6px; }
+.action-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: color var(--transition), border-color var(--transition);
+  white-space: nowrap;
+}
+.action-btn:hover         { color: var(--color-text); border-color: var(--color-text-muted); }
+.action-btn--danger:hover { color: var(--color-danger); border-color: var(--color-danger); }
+
+/* ── Pagination ── */
+.pagination-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+.pagination-bar button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ── Modal field hint ── */
+.field-hint {
+  display: block;
+  font-size: 11px;
+  color: var(--color-text-muted);
+  margin-top: 4px;
+}
+
+/* ── Spinner (shared pattern) ── */
+.spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255,255,255,0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: inline-block;
+}
+@keyframes spin { to { transform: rotate(360deg); } }

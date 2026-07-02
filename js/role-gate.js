@@ -19,7 +19,7 @@
   const RANK = { viewer: 0, staff: 1, admin: 2 };
 
   function applyRoleGate(role) {
-    const myRank = RANK[role] ?? 1;
+    const myRank = RANK[role] ?? 0;
     document.querySelectorAll('[data-min-role]').forEach((el) => {
       const required = RANK[el.getAttribute('data-min-role')] ?? 0;
       if (myRank < required) {
