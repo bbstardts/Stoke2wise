@@ -2,9 +2,9 @@
  * products.js
  * ─────────────────────────────────────────────
  * Simplified product management:
- *   Fields: category, name, description, qty (current stock)
+ *   Fields: category, name, description, qty (current stock), minLevel (minimum stock level)
  *
- * Removed: SKU, unit, binLocation, minLevel
+ * Removed: SKU, unit, binLocation
  * Firestore collection: /products
  */
 
@@ -82,6 +82,7 @@ async function handleFormSubmit(e) {
     name:        document.getElementById('productName').value.trim(),
     description: document.getElementById('description').value.trim(),
     qty:         Number(document.getElementById('quantity').value),
+    minLevel:    Number(document.getElementById('minLevel').value) || 0,
   };
 
   setSavingState(true);
@@ -116,6 +117,7 @@ function openModal(productId) {
       document.getElementById('productName').value = p.name;
       document.getElementById('description').value = p.description || '';
       document.getElementById('quantity').value    = p.qty ?? 0;
+      document.getElementById('minLevel').value    = p.minLevel ?? 0;
     }
   } else {
     document.getElementById('modalTitle').textContent = 'Add Product';
@@ -142,13 +144,16 @@ function renderTable(products) {
 
   tbody.innerHTML = products.map(p => {
     const qty        = p.qty ?? 0;
-    const badgeClass = qty <= 0 ? 'stock-badge--empty' : 'stock-badge--ok';
+    const minLevel   = p.minLevel ?? 0;
+    const isOut      = qty <= 0;
+    const isLow      = !isOut && minLevel > 0 && qty <= minLevel;
+    const badgeClass = isOut ? 'stock-badge--empty' : (isLow ? 'stock-badge--low' : 'stock-badge--ok');
     const desc       = p.description || '';
     const canEdit    = window.currentUserRole !== 'viewer';
     const actionsCell = canEdit
       ? `<div class="action-btns">
-            <button class="action-btn" onclick="openModal('${p.id}')">✏ Edit</button>
-            <button class="action-btn action-btn--danger" onclick="deleteProduct('${p.id}')">🗑 Delete</button>
+            <button class="action-btn" onclick="openModal('${p.id}')">Edit</button>
+            <button class="action-btn action-btn--danger" onclick="deleteProduct('${p.id}')">Delete</button>
           </div>`
       : `<span style="color:var(--color-text-muted);font-size:12px">View only</span>`;
 
@@ -158,6 +163,7 @@ function renderTable(products) {
         <td class="td-name">${escHtml(p.name)}</td>
         <td class="td-desc">${desc ? `<span title="${escHtml(desc)}">${escHtml(desc.slice(0,60))}${desc.length > 60 ? '…' : ''}</span>` : '—'}</td>
         <td><span class="stock-badge ${badgeClass}">${qty}</span></td>
+        <td class="cell-muted">${minLevel}</td>
         <td>${actionsCell}</td>
       </tr>`;
   }).join('');
@@ -167,11 +173,16 @@ function renderTable(products) {
 function updateStats(products) {
   const total   = products.length;
   const out     = products.filter(p => (p.qty ?? 0) <= 0).length;
+  const low     = products.filter(p => {
+    const qty = p.qty ?? 0, min = p.minLevel ?? 0;
+    return qty > 0 && min > 0 && qty <= min;
+  }).length;
   const inStock = total - out;
 
   document.getElementById('statTotal').textContent   = total;
   document.getElementById('statInStock').textContent = inStock;
   document.getElementById('statOut').textContent     = out;
+  document.getElementById('statLow').textContent     = low;
 }
 
 // ── Filter ────────────────────────────────────────────────────────────────────
@@ -224,7 +235,7 @@ function printCurrentReport() {
     total:   visible.length,
     out:     visible.filter(p => (p.qty ?? 0) <= 0).length,
     inStock: visible.filter(p => (p.qty ?? 0) > 0).length,
-    low:     0,
+    low:     visible.filter(p => (p.qty ?? 0) > 0 && (p.minLevel ?? 0) > 0 && (p.qty ?? 0) <= (p.minLevel ?? 0)).length,
   };
   if (window.printProductReport) {
     window.printProductReport(visible, { title, filterDesc, stats });

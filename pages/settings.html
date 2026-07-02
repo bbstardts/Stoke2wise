@@ -95,6 +95,29 @@
       </form>
     </section>
 
+    <!-- Departments / Cost Centres -->
+    <section class="settings-section" data-min-role="staff">
+      <h3 class="settings-heading">Departments / Cost Centres</h3>
+      <p class="settings-hint">These appear as the "Department" choices when issuing stock. Add or remove them to match your farm's cost centres.</p>
+
+      <form id="departmentForm" class="settings-form settings-form--inline">
+        <input type="text" id="departmentName" placeholder="e.g. Poultry" />
+        <button type="submit" class="btn-primary">Add Department</button>
+      </form>
+
+      <table class="data-table" id="departmentsTable">
+        <thead>
+          <tr>
+            <th>Department</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="departmentsBody">
+          <!-- Populated by settings.js -->
+        </tbody>
+      </table>
+    </section>
+
     <!-- User Management (admin only) -->
     <section class="settings-section" id="userManagementSection" data-min-role="admin">
       <h3 class="settings-heading">Team Members</h3>
@@ -128,11 +151,56 @@
     <!-- Danger Zone -->
     <section class="settings-section settings-section--danger" data-min-role="admin">
       <h3 class="settings-heading">Danger Zone</h3>
-      <p>Permanently delete all transaction history. This cannot be undone.</p>
+      <p>
+        Permanently delete <strong>all transaction history</strong> — every GRN, Issue,
+        and Stock Out record shown on the Dashboard, Receive, Issue, Reports, and History
+        pages. Product quantities are not affected. This cannot be undone.
+      </p>
       <button class="btn-danger" id="clearHistoryBtn">Clear All History</button>
+
+      <div class="danger-passkey-setting">
+        <p class="settings-hint" style="margin-top:0">
+          A passkey is required to confirm history deletion. Set or change it here.
+        </p>
+        <form id="passkeyForm" class="settings-form settings-form--inline">
+          <input type="password" id="newClearHistoryPasskey" autocomplete="off"
+                 placeholder="New passkey (min. 4 characters)" minlength="4" />
+          <button type="submit" class="btn-ghost">Set Passkey</button>
+        </form>
+      </div>
     </section>
 
   </main>
+
+  <!-- Clear History confirmation modal -->
+  <div id="clearHistoryModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>Clear All History</h3>
+        <button class="modal-close" id="clearHistoryModalClose">✕</button>
+      </div>
+
+      <div class="danger-modal-body">
+        <p class="danger-warning">
+          ⚠ This permanently deletes every transaction record across the app —
+          GRNs, Issues, and Stock Out entries — from the Dashboard, Receive,
+          Issue, Reports, and History pages. Product stock quantities are
+          <strong>not</strong> affected. This action cannot be undone.
+        </p>
+
+        <div class="field-group">
+          <label for="clearHistoryPasskey">Enter passkey to confirm</label>
+          <input type="password" id="clearHistoryPasskey" autocomplete="off" placeholder="Passkey" />
+        </div>
+        <p id="clearHistoryError" class="danger-error hidden"></p>
+      </div>
+
+      <div class="modal-actions">
+        <button class="btn-ghost" id="clearHistoryCancelBtn">Cancel</button>
+        <button class="btn-danger" id="clearHistoryConfirmBtn">Delete All History</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Firebase SDK (Compat v9) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>

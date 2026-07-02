@@ -174,7 +174,7 @@ document.addEventListener('DOMContentLoaded', () => {
         registerForm.reset();
         registerForm.classList.add('hidden');
         if (successBox) {
-          successBox.textContent = `🎉 You're registered, ${displayName.split(' ')[0]}! Your account is now pending admin approval. You'll be able to sign in as soon as it's approved.`;
+          successBox.textContent = `You're registered, ${displayName.split(' ')[0]}! Your account is now pending admin approval. You'll be able to sign in as soon as it's approved.`;
           successBox.classList.remove('hidden');
         }
       } catch (err) {

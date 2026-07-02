@@ -2,9 +2,12 @@
   const NAV_ITEMS = [
     { icon: '▦',  label: 'Dashboard', href: 'dashboard.html' },
     { icon: '☰',  label: 'Products',  href: 'products.html'  },
+    { icon: '▤',  label: 'Suppliers', href: 'suppliers.html' },
     { icon: '↓',  label: 'Receive',   href: 'grn.html'       },
     { icon: '↑',  label: 'Issue',     href: 'issue.html'     },
     { icon: '⏱',  label: 'History',   href: 'history.html'   },
+    { icon: '▥',  label: 'Reports',   href: 'reports.html'   },
+    { icon: '$',  label: 'Expenses',  href: 'expenses.html'  },
     { icon: '⚙',  label: 'Settings',  href: 'settings.html'  },
   ];
 

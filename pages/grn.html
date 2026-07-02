@@ -59,6 +59,40 @@
     <div class="form-card" data-min-role="staff">
       <form id="grnForm">
 
+        <!-- Supplier -->
+        <fieldset class="form-section">
+          <legend>Supplier</legend>
+          <div class="field-row">
+            <div class="field-group" style="max-width:320px">
+              <label>Supplier *</label>
+              <select id="grnSupplier" required>
+                <option value="">— Select supplier —</option>
+              </select>
+            </div>
+          </div>
+          <p id="noSuppliersHint" class="hidden" style="font-size:12px;color:var(--color-text-muted);margin-top:-8px">
+            No suppliers yet — <a href="suppliers.html">add one on the Suppliers page</a>.
+          </p>
+        </fieldset>
+
+        <!-- Attached Documents (link only — see js/grn.js header note) -->
+        <fieldset class="form-section">
+          <legend>Attached Documents <span style="font-weight:400;color:var(--color-text-muted)">(optional)</span></legend>
+          <div class="field-row">
+            <div class="field-group" style="flex:1">
+              <label>Delivery Note / PO Link</label>
+              <input type="url" id="grnDocUrl" placeholder="https://drive.google.com/… or any shareable link" />
+            </div>
+            <div class="field-group" style="max-width:220px">
+              <label>Document Label</label>
+              <input type="text" id="grnDocLabel" placeholder="e.g. Delivery Note #4521" />
+            </div>
+          </div>
+          <p style="font-size:12px;color:var(--color-text-muted);margin-top:-8px">
+            Paste a link to the delivery note or purchase order (Google Drive, Dropbox, etc.). It will be attached to this GRN and shown on the History page.
+          </p>
+        </fieldset>
+
         <!-- Items Received -->
         <fieldset class="form-section">
           <legend>Items Received</legend>
@@ -132,7 +166,7 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-ghost" id="printGrnBtn"
                   onclick="printCurrentGrn()"
-                  style="font-size:13px;padding:6px 14px;">🖨 Print Receipt</button>
+                  style="font-size:13px;padding:6px 14px;">Print Receipt</button>
           <button class="modal-close"
                   onclick="document.getElementById('grnDetailModal').classList.add('hidden')">✕</button>
         </div>

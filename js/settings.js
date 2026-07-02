@@ -26,7 +26,8 @@
  *   sendInvite(e)           — write a /users doc with status:"invited"
  *   changeRole(uid, role)   — update role field on a /users doc
  *   removeUser(uid)         — delete a /users doc
- *   clearAllHistory()       — batch delete all /transactions docs (admin only)
+ *   clearAllHistory()       — passkey-gated, chunked batch delete of all
+ *                              /transactions + /history docs (admin only)
  *
  * Role checks:
  *   Only show #userManagementSection if currentUser role === 'admin'.
@@ -37,13 +38,22 @@
 document.addEventListener('DOMContentLoaded', () => {
   loadProfile();
   loadWarehouseConfig();
+  loadDepartments();
   loadUsers();
 
   document.getElementById('profileForm').addEventListener('submit',   saveProfile);
   document.getElementById('passwordForm').addEventListener('submit',  changePassword);
   document.getElementById('warehouseForm').addEventListener('submit', saveWarehouseConfig);
+  document.getElementById('departmentForm').addEventListener('submit', addDepartment);
   document.getElementById('inviteForm').addEventListener('submit',    sendInvite);
-  document.getElementById('clearHistoryBtn').addEventListener('click', clearAllHistory);
+  document.getElementById('passkeyForm').addEventListener('submit',    setClearHistoryPasskey);
+  document.getElementById('clearHistoryBtn').addEventListener('click', openClearHistoryModal);
+  document.getElementById('clearHistoryCancelBtn').addEventListener('click', closeClearHistoryModal);
+  document.getElementById('clearHistoryModalClose').addEventListener('click', closeClearHistoryModal);
+  document.getElementById('clearHistoryConfirmBtn').addEventListener('click', clearAllHistory);
+  document.getElementById('clearHistoryPasskey').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); clearAllHistory(); }
+  });
 });
 
 // ── Profile ──────────────────────────────────
@@ -122,6 +132,81 @@ async function saveWarehouseConfig(e) {
   } catch (err) {
     alert('Failed to save configuration: ' + err.message);
   }
+}
+
+// ── Departments / Cost Centres ────────────────
+// Stored as an array on /settings/config so it's read alongside the rest
+// of the warehouse config (same doc pattern as warehouseName, grnPrefix, etc.)
+const DEFAULT_DEPARTMENTS = ['Poultry', 'Crop', 'Maintenance', 'Admin'];
+
+async function loadDepartments() {
+  const tbody = document.getElementById('departmentsBody');
+  try {
+    const doc = await window.firebaseDb.collection('settings').doc('config').get();
+    const depts = (doc.exists && Array.isArray(doc.data().departments) && doc.data().departments.length)
+      ? doc.data().departments
+      : DEFAULT_DEPARTMENTS;
+    renderDepartments(depts);
+  } catch (err) {
+    tbody.innerHTML = `<tr><td colspan="2" style="color:var(--color-text-muted);text-align:center;padding:20px">Could not load departments.</td></tr>`;
+  }
+}
+
+function renderDepartments(depts) {
+  const tbody = document.getElementById('departmentsBody');
+  if (!depts.length) {
+    tbody.innerHTML = `<tr><td colspan="2" style="color:var(--color-text-muted);text-align:center;padding:20px">No departments yet — add one above.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = depts.map(d => `
+    <tr>
+      <td>${escSettingsHtml(d)}</td>
+      <td><button class="btn-ghost" style="font-size:12px" onclick="removeDepartment('${escSettingsHtml(d).replace(/'/g,"\\'")}')">Remove</button></td>
+    </tr>`).join('');
+}
+
+async function addDepartment(e) {
+  e.preventDefault();
+  const input = document.getElementById('departmentName');
+  const name  = input.value.trim();
+  if (!name) return;
+  try {
+    const ref  = window.firebaseDb.collection('settings').doc('config');
+    const doc  = await ref.get();
+    const depts = (doc.exists && Array.isArray(doc.data().departments) && doc.data().departments.length)
+      ? doc.data().departments
+      : DEFAULT_DEPARTMENTS.slice();
+    if (depts.some(d => d.toLowerCase() === name.toLowerCase())) {
+      alert('That department already exists.');
+      return;
+    }
+    depts.push(name);
+    await ref.set({ departments: depts, updatedAt: new Date().toISOString() }, { merge: true });
+    input.value = '';
+    renderDepartments(depts);
+  } catch (err) {
+    alert('Failed to add department: ' + err.message);
+  }
+}
+
+async function removeDepartment(name) {
+  if (!confirm(`Remove department "${name}"? Past transactions keep their recorded department.`)) return;
+  try {
+    const ref  = window.firebaseDb.collection('settings').doc('config');
+    const doc  = await ref.get();
+    const depts = (doc.exists && Array.isArray(doc.data().departments) && doc.data().departments.length)
+      ? doc.data().departments
+      : DEFAULT_DEPARTMENTS.slice();
+    const updated = depts.filter(d => d !== name);
+    await ref.set({ departments: updated, updatedAt: new Date().toISOString() }, { merge: true });
+    renderDepartments(updated);
+  } catch (err) {
+    alert('Failed to remove department: ' + err.message);
+  }
+}
+
+function escSettingsHtml(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 // ── Users ────────────────────────────────────
@@ -238,22 +323,118 @@ async function removeUser(uid) {
 }
 
 // ── Danger Zone ───────────────────────────────
-async function clearAllHistory() {
-  const input = prompt(
-    'This will permanently delete ALL transaction history.\n' +
-    'Product quantities will NOT be affected.\n\n' +
-    'Type DELETE to confirm:'
-  );
-  if (input !== 'DELETE') return;
+// Passkey is stored as a SHA-256 hash on /settings/config (clearHistoryPasskeyHash) —
+// never in plaintext. If no passkey has been set yet, the default is "DELETE" so the
+// feature works out of the box; admins are encouraged to set their own above.
+const DEFAULT_CLEAR_HISTORY_PASSKEY = 'DELETE';
+
+async function sha256Hex(text) {
+  const enc  = new TextEncoder().encode(text);
+  const hash = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function setClearHistoryPasskey(e) {
+  e.preventDefault();
+  const input = document.getElementById('newClearHistoryPasskey');
+  const value = input.value.trim();
+  if (value.length < 4) {
+    alert('Passkey must be at least 4 characters.');
+    return;
+  }
   try {
-    const snap  = await window.firebaseDb.collection('transactions').get();
-    const histSnap = await window.firebaseDb.collection('history').get();
-    const batch = window.firebaseDb.batch();
-    snap.docs.forEach(d  => batch.delete(d.ref));
-    histSnap.docs.forEach(d => batch.delete(d.ref));
-    await batch.commit();
-    alert('History cleared.');
+    const hash = await sha256Hex(value);
+    await window.firebaseDb.collection('settings').doc('config').set(
+      { clearHistoryPasskeyHash: hash, updatedAt: new Date().toISOString() },
+      { merge: true }
+    );
+    input.value = '';
+    alert('Passkey updated. You will need it next time you clear history.');
   } catch (err) {
-    alert('Failed to clear history: ' + err.message);
+    alert('Failed to set passkey: ' + err.message);
+  }
+}
+
+function openClearHistoryModal() {
+  const modal = document.getElementById('clearHistoryModal');
+  const pass  = document.getElementById('clearHistoryPasskey');
+  const error = document.getElementById('clearHistoryError');
+  pass.value = '';
+  error.classList.add('hidden');
+  modal.classList.remove('hidden');
+  pass.focus();
+}
+
+function closeClearHistoryModal() {
+  document.getElementById('clearHistoryModal').classList.add('hidden');
+}
+
+async function clearAllHistory() {
+  const passInput  = document.getElementById('clearHistoryPasskey');
+  const errorEl    = document.getElementById('clearHistoryError');
+  const confirmBtn = document.getElementById('clearHistoryConfirmBtn');
+  const entered    = passInput.value;
+
+  errorEl.classList.add('hidden');
+  if (!entered) {
+    errorEl.textContent = 'Please enter the passkey.';
+    errorEl.classList.remove('hidden');
+    return;
+  }
+
+  confirmBtn.disabled    = true;
+  confirmBtn.textContent = 'Verifying…';
+
+  try {
+    // Verify passkey against the stored hash (or the default if none is set yet).
+    const cfgDoc = await window.firebaseDb.collection('settings').doc('config').get();
+    const storedHash = cfgDoc.exists ? cfgDoc.data().clearHistoryPasskeyHash : null;
+    const enteredHash = await sha256Hex(entered);
+    const isValid = storedHash ? enteredHash === storedHash : entered === DEFAULT_CLEAR_HISTORY_PASSKEY;
+
+    if (!isValid) {
+      errorEl.textContent = 'Incorrect passkey. Please try again.';
+      errorEl.classList.remove('hidden');
+      confirmBtn.disabled    = false;
+      confirmBtn.textContent = 'Delete All History';
+      passInput.select();
+      return;
+    }
+
+    confirmBtn.textContent = 'Deleting…';
+
+    // Gather every doc from both collections that power every "history" view
+    // across the app (Dashboard activity feed, Receive/Issue recent lists,
+    // Reports, and the History page itself).
+    const [txSnap, histSnap] = await Promise.all([
+      window.firebaseDb.collection('transactions').get(),
+      window.firebaseDb.collection('history').get(),
+    ]);
+    const allRefs = [...txSnap.docs.map(d => d.ref), ...histSnap.docs.map(d => d.ref)];
+
+    if (allRefs.length === 0) {
+      closeClearHistoryModal();
+      alert('There is no history to clear — it is already empty.');
+      return;
+    }
+
+    // Firestore caps a single batch at 500 writes, so delete in safe chunks.
+    const CHUNK_SIZE = 450;
+    for (let i = 0; i < allRefs.length; i += CHUNK_SIZE) {
+      const chunk = allRefs.slice(i, i + CHUNK_SIZE);
+      const batch = window.firebaseDb.batch();
+      chunk.forEach(ref => batch.delete(ref));
+      await batch.commit();
+    }
+
+    closeClearHistoryModal();
+    alert(`✓ History cleared — ${allRefs.length} record(s) deleted across all pages.`);
+  } catch (err) {
+    console.error('clearAllHistory error:', err);
+    errorEl.textContent = 'Failed to clear history: ' + err.message;
+    errorEl.classList.remove('hidden');
+  } finally {
+    confirmBtn.disabled    = false;
+    confirmBtn.textContent = 'Delete All History';
   }
 }

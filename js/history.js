@@ -14,6 +14,7 @@ let unsubscribe  = null;
 let searchQuery  = '';
 let filterAction = 'all';
 let filterDate   = 'all';
+let filterDepartment = 'all';
 let dateFrom     = null;
 let dateTo       = null;
 
@@ -44,6 +45,7 @@ function startListener() {
     .onSnapshot(
       snap => {
         allRecords = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        populateDepartmentFilter();
         renderTable();
       },
       err => {
@@ -56,6 +58,7 @@ function startListener() {
 function wireControls() {
   const searchInput   = document.getElementById('historySearch');
   const actionFilter  = document.getElementById('historyActionFilter');
+  const deptFilter    = document.getElementById('historyDepartmentFilter');
   const clearBtn      = document.getElementById('clearSearch');
   const dateRangeSel  = document.getElementById('historyDateRange');
   const customWrap    = document.getElementById('customDateWrap');
@@ -69,6 +72,7 @@ function wireControls() {
     renderTable();
   });
   actionFilter.addEventListener('change', () => { filterAction = actionFilter.value; renderTable(); });
+  deptFilter.addEventListener('change', () => { filterDepartment = deptFilter.value; renderTable(); });
   clearBtn.addEventListener('click', () => {
     searchInput.value = ''; searchQuery = '';
     clearBtn.classList.add('hidden'); renderTable();
@@ -111,15 +115,33 @@ function getDateBounds() {
   }
 }
 
+function populateDepartmentFilter() {
+  const sel = document.getElementById('historyDepartmentFilter');
+  if (!sel) return;
+  const current = filterDepartment;
+  const depts = [...new Set(allRecords.map(d => d.department).filter(Boolean))].sort();
+  sel.innerHTML = '<option value="all">All Departments</option>' +
+    depts.map(d => `<option value="${escapeHtml(d)}" ${d === current ? 'selected' : ''}>${escapeHtml(d)}</option>`).join('');
+  // If the previously selected department no longer exists in the data, fall back to "all"
+  if (current !== 'all' && !depts.includes(current)) {
+    filterDepartment = 'all';
+    sel.value = 'all';
+  }
+}
+
 function getFiltered() {
   const { from, to } = getDateBounds();
   return allRecords.filter(d => {
     const matchesAction = filterAction === 'all' || (d.actionType || '').toLowerCase() === filterAction.toLowerCase();
+    const matchesDept   = filterDepartment === 'all' || (d.department || '') === filterDepartment;
     const matchesSearch = searchQuery === '' ||
       (d.productName || '').toLowerCase().includes(searchQuery) ||
       (d.category    || '').toLowerCase().includes(searchQuery) ||
       (d.description || '').toLowerCase().includes(searchQuery) ||
-      (d.actionType  || '').toLowerCase().includes(searchQuery);
+      (d.actionType  || '').toLowerCase().includes(searchQuery) ||
+      (d.department  || '').toLowerCase().includes(searchQuery) ||
+      (d.supplierName|| '').toLowerCase().includes(searchQuery) ||
+      (d.documentLabel|| '').toLowerCase().includes(searchQuery);
     let matchesDate = true;
     if (from || to) {
       const ts = d.createdAt ? new Date(d.createdAt) : null;
@@ -129,7 +151,7 @@ function getFiltered() {
         if (to   && ts > to)   matchesDate = false;
       }
     }
-    return matchesAction && matchesSearch && matchesDate;
+    return matchesAction && matchesDept && matchesSearch && matchesDate;
   });
 }
 
@@ -142,7 +164,8 @@ function buildPrintMeta() {
       return [f,t].filter(Boolean).join(' — ') || 'Custom';
     })()
   }[filterDate] || 'All Dates';
-  return { actionLabel, rangeLabel, searchQuery };
+  const departmentLabel = filterDepartment === 'all' ? null : filterDepartment;
+  return { actionLabel, rangeLabel, searchQuery, departmentLabel };
 }
 
 /* ── Group filtered records: Category → Product → oldest-to-newest ── */
@@ -212,6 +235,16 @@ function renderTable() {
       const desc = d.description || '—';
       const qtyDisplay = d.qtyChanged != null ? fmtNum(d.qtyChanged) : '—';
       const stockAfterDisplay = d.stockAfter != null ? fmtNum(d.stockAfter) : '—';
+      const tag = d.department
+        ? `<span class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-right:6px">${escapeHtml(d.department)}</span>`
+        : (d.supplierName
+            ? `<span class="totals-chip" style="background:rgba(22,163,74,0.08);color:var(--color-success);margin-right:6px">${escapeHtml(d.supplierName)}</span>`
+            : '');
+      const docLink = d.documentUrl
+        ? `<a href="${escapeHtml(d.documentUrl)}" target="_blank" rel="noopener"
+              class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-right:6px;text-decoration:none"
+              title="Open attached document">📎 ${escapeHtml(d.documentLabel || 'Document')}</a>`
+        : '';
 
       return `<tr>
         <td class="date-cell">${formatDateTime(d.createdAt)}</td>
@@ -220,7 +253,7 @@ function renderTable() {
         <td><span class="tx-badge ${badgeClass}">${escapeHtml(action)}</span></td>
         <td class="num-cell">${qtyDisplay}</td>
         <td class="num-cell">${stockAfterDisplay}</td>
-        <td class="td-desc" title="${escapeHtml(desc)}">${escapeHtml(desc.length > 50 ? desc.slice(0,50)+'…' : desc)}</td>
+        <td class="td-desc" title="${escapeHtml(desc)}">${tag}${docLink}${escapeHtml(desc.length > 50 ? desc.slice(0,50)+'…' : desc)}</td>
       </tr>`;
     }).join('');
 

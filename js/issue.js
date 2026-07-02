@@ -11,8 +11,11 @@ const auth = () => window.firebaseAuth;
 
 let productList  = [];
 let categoryList = [];
+let departmentList = [];
 let rowCount     = 0;
 let recentIssuesData = [];
+
+const DEFAULT_DEPARTMENTS = ['Poultry', 'Crop', 'Maintenance', 'Admin'];
 
 /* ─── Boot ─────────────────────────────────────────────────────────────── */
 
@@ -27,9 +30,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadProducts();
+  await loadDepartments();
   addLineItemRow();
   loadRecentIssues();
 });
+
+/* ─── Departments ───────────────────────────────────────────────────────── */
+
+async function loadDepartments() {
+  const sel = document.getElementById('issueDepartment');
+  try {
+    const doc = await db().collection('settings').doc('config').get();
+    departmentList = (doc.exists && Array.isArray(doc.data().departments) && doc.data().departments.length)
+      ? doc.data().departments
+      : DEFAULT_DEPARTMENTS;
+  } catch (err) {
+    console.error('Could not load departments:', err);
+    departmentList = DEFAULT_DEPARTMENTS;
+  }
+  if (sel) {
+    sel.innerHTML = '<option value="">— Select department —</option>' +
+      departmentList.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+  }
+}
 
 /* ─── Products ──────────────────────────────────────────────────────────── */
 
@@ -343,6 +366,9 @@ function resetForm() {
 
 async function submitIssue(e) {
   e.preventDefault();
+  const department = document.getElementById('issueDepartment')?.value || '';
+  if (!department) { showToast('Please select a receiving department.', 'error'); return; }
+
   const items = collectLineItems();
   if (!items.length) { showToast('Add at least one item with a quantity.', 'error'); return; }
 
@@ -381,7 +407,7 @@ async function submitIssue(e) {
   try {
     const batch = db().batch();
     const txRef = db().collection('transactions').doc();
-    batch.set(txRef, { type:'issue', issueNumber, items,
+    batch.set(txRef, { type:'issue', issueNumber, items, department,
       createdBy: user?.email||user?.uid||'unknown', createdAt: now });
 
     items.forEach(item => {
@@ -393,7 +419,7 @@ async function submitIssue(e) {
       const h = db().collection('history').doc();
       batch.set(h, { actionType:'Issued', category:item.category, productName:item.productName,
         description:item.description, qtyChanged:item.qty, stockBefore:item.stockBefore??0,
-        stockAfter, refNumber:issueNumber,
+        stockAfter, refNumber:issueNumber, department,
         performedBy:user?.email||user?.uid||'unknown', createdAt:now });
 
       if (stockAfter <= 0) {
@@ -407,6 +433,7 @@ async function submitIssue(e) {
           stockBefore: item.stockBefore ?? 0,
           stockAfter,
           refNumber: issueNumber,
+          department,
           performedBy: user?.email || user?.uid || 'unknown',
           createdAt: now,
         });
@@ -458,7 +485,8 @@ function renderIssueRows(issues) {
 
     const headerRow = `<tr class="history-category-row">
       <td><strong>${escHtml(iss.issueNumber || '—')}</strong></td>
-      <td colspan="3">${dateStr}</td>
+      <td colspan="2">${dateStr}</td>
+      <td>${escHtml(iss.department || '—')}</td>
       <td colspan="2">${escHtml(iss.createdBy || '—')}</td>
     </tr>`;
 
@@ -519,6 +547,7 @@ async function viewIssueDetail(id) {
     content.innerHTML = `
       <div class="detail-meta">
         <span><strong>Date / Time:</strong> ${dateStr}</span>
+        <span><strong>Department:</strong> ${escHtml(iss.department||'—')}</span>
         <span><strong>Issued by:</strong> ${iss.createdBy||'—'}</span>
       </div>
       <div class="table-scroll-wrap" style="margin-top:16px">

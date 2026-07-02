@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Expenses</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/forms.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/history.css" />
+  <link rel="stylesheet" href="../css/settings.css" />
+  <link rel="stylesheet" href="../css/expenses.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Expense Tracker</h2>
+    </header>
+
+    <!-- Log Expense -->
+    <div class="form-card" data-min-role="staff">
+      <form id="expenseForm">
+        <fieldset class="form-section">
+          <legend>Log Expense</legend>
+          <div class="field-row">
+            <div class="field-group">
+              <label>Date *</label>
+              <input type="date" id="expenseDate" required />
+            </div>
+            <div class="field-group">
+              <label>Category *</label>
+              <select id="expenseCategory" required>
+                <option value="">— Select category —</option>
+              </select>
+            </div>
+            <div class="field-group">
+              <label>Amount *</label>
+              <input type="number" id="expenseAmount" min="0.01" step="0.01" placeholder="0.00" required />
+            </div>
+          </div>
+          <div class="field-row">
+            <div class="field-group" style="flex:1">
+              <label>Description</label>
+              <input type="text" id="expenseDescription" placeholder="e.g. Diesel for generator, forklift repair…" />
+            </div>
+          </div>
+        </fieldset>
+        <div class="form-actions">
+          <button type="submit" class="btn-primary">Log Expense</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Monthly Total -->
+    <div class="form-card" style="margin-top:24px">
+      <section class="section-block">
+        <div class="section-header-row">
+          <h3 class="section-title">Monthly Total</h3>
+        </div>
+        <div class="expense-month-summary">
+          <span class="month-total-value" id="monthSummaryValue">0.00</span>
+          <span class="month-total-label" id="monthSummaryLabel">Total for this month</span>
+        </div>
+        <div id="monthByCategory" style="margin-top:12px"></div>
+      </section>
+    </div>
+
+    <!-- Expense History -->
+    <div class="form-card" style="margin-top:24px">
+      <section class="section-block">
+        <div class="section-header-row">
+          <h3 class="section-title">Expense History</h3>
+        </div>
+
+        <div class="expenses-toolbar">
+          <div class="field-group" style="max-width:180px">
+            <label>Month</label>
+            <input type="month" id="expenseMonthFilter" class="expense-filter" />
+          </div>
+          <div class="field-group" style="max-width:200px">
+            <label>Category</label>
+            <select id="expenseCategoryFilter" class="expense-filter">
+              <option value="all">All Categories</option>
+            </select>
+          </div>
+          <button type="button" class="btn-ghost" id="clearExpenseFilters" style="align-self:flex-end">Clear Filters</button>
+          <span class="expenses-toolbar-spacer"></span>
+          <span id="expenseCount" class="expense-count">— expenses</span>
+          <button id="exportExpensesCsvBtn" class="btn-ghost" disabled>Export CSV</button>
+          <button id="exportExpensesPdfBtn" class="btn-export-pdf" disabled title="Download as PDF">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+              <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v4a2 2 0 002 2h1v1a1 1 0 001 1h8a1 1 0 001-1v-1h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a1 1 0 00-1-1H6a1 1 0 00-1 1zm2 0h6v3H7V4zm-1 9h8v3H6v-3zm8-5a1 1 0 110 2 1 1 0 010-2z" clip-rule="evenodd"/>
+            </svg>
+            PDF
+          </button>
+        </div>
+
+        <div class="table-scroll-wrap">
+          <table class="data-table history-table" id="expensesTable">
+            <thead>
+              <tr>
+                <th class="sortable-th" data-sort="date">Date <span class="sort-arrow">⇅</span></th>
+                <th class="sortable-th" data-sort="category">Category <span class="sort-arrow">⇅</span></th>
+                <th class="sortable-th" data-sort="description">Description <span class="sort-arrow">⇅</span></th>
+                <th class="sortable-th" data-sort="amount">Amount <span class="sort-arrow">⇅</span></th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="expensesBody">
+              <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+            </tbody>
+            <tfoot id="expensesFoot"></tfoot>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <!-- Category Management (admin only) -->
+    <div class="form-card" style="margin-top:24px" data-min-role="admin">
+      <section class="section-block">
+        <div class="section-header-row">
+          <h3 class="section-title">Expense Categories</h3>
+        </div>
+        <p class="settings-hint" style="font-size:12px;color:var(--color-text-muted);margin-bottom:12px">
+          These appear as the category choices when logging an expense.
+        </p>
+        <form id="categoryForm" class="settings-form settings-form--inline">
+          <input type="text" id="newCategoryName" placeholder="e.g. Fuel" />
+          <button type="submit" class="btn-primary">Add Category</button>
+        </form>
+        <table class="data-table" id="expenseCategoriesTable" style="margin-top:12px">
+          <thead>
+            <tr><th>Category</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="expenseCategoriesBody">
+            <!-- Populated by expenses.js -->
+          </tbody>
+        </table>
+      </section>
+    </div>
+  </main>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="../js/print.js"></script>
+  <script src="../js/expenses.js"></script>
+</body>
+</html>

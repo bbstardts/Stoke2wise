@@ -39,6 +39,7 @@
 .stat-card--ok     .stat-value { color: var(--color-success); }
 .stat-card--warn   .stat-value { color: var(--color-warning); }
 .stat-card--danger .stat-value { color: var(--color-danger);  }
+.stat-card--warning .stat-value { color: var(--color-warning); }
 
 /* ── Table Wrapper ── */
 .table-wrap { overflow-x: auto; padding: 0; }

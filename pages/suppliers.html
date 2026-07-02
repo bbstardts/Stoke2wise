@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Suppliers</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/products.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Suppliers</h2>
+      <div style="display:flex;gap:10px;align-items:center;">
+        <button class="btn-primary" id="addSupplierBtn" data-min-role="staff">+ Add Supplier</button>
+      </div>
+    </header>
+
+    <!-- Search Bar -->
+    <div class="toolbar">
+      <input type="text" id="searchInput" class="search-input" placeholder="Search by name or contact person…" />
+    </div>
+
+    <!-- Suppliers Table -->
+    <div class="section-block table-wrap">
+      <table class="data-table" id="suppliersTable">
+        <thead>
+          <tr>
+            <th>Supplier Name</th>
+            <th>Contact Person</th>
+            <th>Phone</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="suppliersBody"></tbody>
+      </table>
+      <p id="emptyState" class="empty-state hidden">No suppliers found. Click <strong>+ Add Supplier</strong> to get started.</p>
+    </div>
+  </main>
+
+  <!-- ── Add / Edit Modal ── -->
+  <div id="supplierModal" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add Supplier</h3>
+        <button class="modal-close" id="closeModal">✕</button>
+      </div>
+
+      <form id="supplierForm" class="modal-form">
+        <input type="hidden" id="supplierId" />
+
+        <div class="field-group">
+          <label>Supplier Name *</label>
+          <input type="text" id="supplierName" required placeholder="e.g. Greenfield Agro Supplies" />
+        </div>
+
+        <div class="field-row">
+          <div class="field-group">
+            <label>Contact Person</label>
+            <input type="text" id="contactPerson" placeholder="e.g. John Adeyemi" />
+          </div>
+          <div class="field-group">
+            <label>Phone</label>
+            <input type="tel" id="phone" placeholder="e.g. +234 803 000 0000" />
+          </div>
+        </div>
+
+        <div id="formError" class="error-msg hidden"></div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="cancelModal">Cancel</button>
+          <button type="submit" class="btn-primary" id="saveBtn">
+            <span id="saveBtnText">Save Supplier</span>
+            <span id="saveBtnSpinner" class="spinner hidden"></span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="../js/suppliers.js"></script>
+</body>
+</html>

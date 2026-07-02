@@ -59,6 +59,19 @@
     <div class="form-card" data-min-role="staff">
       <form id="issueForm">
 
+        <!-- Department / Cost Centre -->
+        <fieldset class="form-section">
+          <legend>Receiving Department</legend>
+          <div class="field-row">
+            <div class="field-group" style="max-width:320px">
+              <label>Department *</label>
+              <select id="issueDepartment" required>
+                <option value="">— Select department —</option>
+              </select>
+            </div>
+          </div>
+        </fieldset>
+
         <!-- Line Items -->
         <fieldset class="form-section">
           <legend>Items Issued</legend>
@@ -135,7 +148,7 @@
         <div style="display:flex;gap:8px;align-items:center;">
           <button class="btn-ghost" id="printIssueBtn"
                   onclick="printCurrentIssue()"
-                  style="font-size:13px;padding:6px 14px;">🖨 Print Receipt</button>
+                  style="font-size:13px;padding:6px 14px;">Print Receipt</button>
           <button class="modal-close"
                   onclick="document.getElementById('issueDetailModal').classList.add('hidden')">✕</button>
         </div>

@@ -15,10 +15,12 @@ warehouse-app/
 ├── pages/
 │   ├── dashboard.html          # KPIs, low-stock alerts, activity feed
 │   ├── products.html           # Product catalogue — full CRUD
-│   ├── grn.html                # Goods Received Note (stock IN)
+│   ├── suppliers.html          # Supplier directory — full CRUD
+│   ├── grn.html                # Goods Received Note (stock IN) — with optional delivery-note/PO link
 │   ├── issue.html              # Stock Issue (stock OUT)
-│   ├── history.html            # All transactions — filter, search, export CSV
-│   └── settings.html           # Profile, warehouse config, user management
+│   ├── history.html            # All transactions — filter, search, export CSV; shows attached GRN documents
+│   ├── expenses.html           # Expense Tracker — log, filter/sort, monthly totals, category management
+│   └── settings.html           # Profile, warehouse config, departments, user management
 │
 ├── css/
 │   ├── global.css              # Design tokens, reset, shared components
@@ -29,7 +31,8 @@ warehouse-app/
 │   ├── products.css            # Stock badges, row action buttons
 │   ├── forms.css               # Shared GRN + Issue form card + line-items
 │   ├── history.css             # Transaction type badges, date filters, pagination
-│   └── settings.css            # Settings section cards, inline invite form
+│   ├── settings.css            # Settings section cards, inline invite form
+│   └── expenses.css            # Expense toolbar, sortable headers, monthly total view
 │
 └── js/
     ├── firebase-config.js      # Firebase app init + service exports (auth, db)
@@ -38,10 +41,12 @@ warehouse-app/
     ├── sidebar.js              # Injects sidebar HTML + active link + sign-out
     ├── dashboard.js            # KPI queries, low-stock table, activity feed
     ├── products.js             # Product CRUD, real-time table, modal, filtering
-    ├── grn.js                  # GRN form, dynamic line items, batch stock update
-    ├── issue.js                # Issue form, stock validation, batch stock decrement
-    ├── history.js              # Transaction list, filters, pagination, CSV export
-    └── settings.js             # Profile, password, warehouse config, users
+    ├── suppliers.js            # Supplier CRUD, real-time table, modal, filtering
+    ├── grn.js                  # GRN form, supplier select, dynamic line items, batch stock update
+    ├── issue.js                # Issue form, department select, stock validation, batch stock decrement
+    ├── history.js              # Transaction list, filters (incl. department), pagination, CSV export, GRN document links
+    ├── settings.js             # Profile, password, warehouse config, departments, users
+    └── expenses.js             # Expense CRUD, category management, filtering/sorting, monthly totals, CSV/PDF export
 ```
 
 ---
@@ -51,9 +56,12 @@ warehouse-app/
 | Collection     | Purpose                                              |
 |----------------|------------------------------------------------------|
 | `/products`    | Product catalogue. Each doc holds qty, minLevel, etc.|
-| `/transactions`| Every GRN and Issue record with line-item arrays.    |
+| `/suppliers`   | Supplier directory: name, contactPerson, phone.      |
+| `/transactions`| Every GRN and Issue record with line-item arrays. GRNs carry `supplierId`/`supplierName` and optional `documentUrl`/`documentLabel` (delivery note or PO link); Issues carry `department`. |
+| `/history`     | Flattened per-item audit trail powering the History page; mirrors the same `department` / `supplierName` fields as `/transactions`, and carries `documentUrl`/`documentLabel` for GRN-sourced records. |
+| `/expenses`    | Store-related expense entries: `date`, `category`, `amount`, `description`, `createdBy`, `createdAt`. |
 | `/users`       | App-level user profiles and role assignments.        |
-| `/settings`    | Single `config` doc: warehouse name, currency, etc.  |
+| `/settings`    | Single `config` doc: warehouse name, currency, `departments` list, `expenseCategories` list, etc. |
 
 ---
 

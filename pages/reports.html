@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="color-scheme" content="light only" />
+  <title>StockWise — Reports</title>
+  <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/dashboard.css" />
+  <link rel="stylesheet" href="../css/reports.css" />
+</head>
+<body>
+
+  <div id="sidebar-placeholder"></div>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h2>Monthly Stock Consumption Report</h2>
+    </header>
+
+    <!-- Toolbar -->
+    <div class="reports-toolbar">
+      <div class="field-group" style="max-width:220px">
+        <label>Month</label>
+        <input type="month" id="reportMonth" />
+      </div>
+      <div class="reports-toolbar-actions">
+        <button class="btn-ghost" id="exportCsvBtn" disabled>Export CSV</button>
+        <button class="btn-export-pdf" id="exportPdfBtn" disabled>Export PDF</button>
+      </div>
+    </div>
+
+    <!-- Summary Stats -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-label">Products Issued</span>
+        <span class="kpi-value" id="statProducts">0</span>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <span class="kpi-label">Departments</span>
+        <span class="kpi-value" id="statDepartments">0</span>
+      </div>
+      <div class="kpi-card kpi-red">
+        <span class="kpi-label">Total Qty Issued</span>
+        <span class="kpi-value" id="statTotalQty">0</span>
+      </div>
+    </section>
+
+    <!-- Consumption Table -->
+    <section class="section-block">
+      <div class="section-header">
+        <h3 class="section-title" id="reportTableTitle">Consumption by Product &amp; Department</h3>
+      </div>
+      <div class="table-scroll-wrap">
+        <table class="data-table" id="consumptionTable">
+          <thead id="consumptionThead">
+            <tr>
+              <th>Category</th>
+              <th>Product</th>
+              <th>Total Issued</th>
+            </tr>
+          </thead>
+          <tbody id="consumptionBody">
+            <tr><td colspan="3" class="table-loading">Select a month to view the report.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Firebase SDK (Compat v9) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/auth-guard.js"></script>
+  <script src="../js/sidebar.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
+  <script src="../js/print.js"></script>
+  <script src="../js/reports.js"></script>
+</body>
+</html>

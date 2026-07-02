@@ -326,7 +326,7 @@ window.printGrnReceipt = function(g) {
     </div>
     <div class="meta-row">
       <span class="meta-label">Supplier:</span>
-      <span class="meta-value">${g.supplier || '—'}</span>
+      <span class="meta-value">${escRpt(g.supplierName) || '—'}</span>
     </div>
     <div class="meta-row">
       <span class="meta-label">Reference / Invoice:</span>
@@ -445,6 +445,10 @@ window.printIssueReceipt = function(iss) {
       <span class="meta-value">${formatDate(iss.date)}</span>
     </div>
     <div class="meta-row">
+      <span class="meta-label">Department:</span>
+      <span class="meta-value">${escRpt(iss.department) || '—'}</span>
+    </div>
+    <div class="meta-row">
       <span class="meta-label">Issued To:</span>
       <span class="meta-value">${iss.issuedTo || '—'}</span>
     </div>
@@ -552,7 +556,7 @@ window.printProductReport = function(products, opts = {}) {
       </div>
       <div class="rpt-stat rpt-stat--warn">
         <div class="rpt-stat-val">${stats.low}</div>
-        <div class="rpt-stat-lbl">Low Stock (≤5)</div>
+        <div class="rpt-stat-lbl">Low Stock</div>
       </div>
       <div class="rpt-stat rpt-stat--danger">
         <div class="rpt-stat-val">${stats.out}</div>
@@ -564,16 +568,18 @@ window.printProductReport = function(products, opts = {}) {
   const rows = products.length
     ? products.map((p, i) => {
         const qty = p.qty != null ? p.qty : 0;
-        const statusClass = qty <= 0 ? 'badge-out' : qty <= 5 ? 'badge-low' : 'badge-ok';
-        const statusLabel = qty <= 0 ? 'Out of Stock' : qty <= 5 ? 'Low Stock' : 'In Stock';
+        const min = p.minLevel != null ? p.minLevel : 0;
+        const isLow = min > 0 && qty > 0 && qty <= min;
+        const statusClass = qty <= 0 ? 'badge-out' : isLow ? 'badge-low' : 'badge-ok';
+        const statusLabel = qty <= 0 ? 'Out of Stock' : isLow ? 'Low Stock' : 'In Stock';
         return `
           <tr>
             <td>${i + 1}</td>
             <td><strong>${escRpt(p.name)}</strong></td>
             <td>${escRpt(p.category || '—')}</td>
-            <td>${p.binLocation ? `<code>${escRpt(p.binLocation)}</code>` : '—'}</td>
             <td class="td-desc">${p.description ? escRpt(p.description.slice(0, 80)) + (p.description.length > 80 ? '…' : '') : '—'}</td>
             <td class="td-qty"><strong>${qty}</strong></td>
+            <td class="td-qty">${min}</td>
             <td><span class="rpt-badge ${statusClass}">${statusLabel}</span></td>
           </tr>`;
       }).join('')
@@ -697,9 +703,9 @@ window.printProductReport = function(products, opts = {}) {
         <th style="width:32px">#</th>
         <th>Product Name</th>
         <th>Category</th>
-        <th>Bin</th>
         <th>Description</th>
         <th style="text-align:right">Qty</th>
+        <th style="text-align:right">Min Level</th>
         <th style="text-align:center">Status</th>
       </tr>
     </thead>
@@ -730,7 +736,7 @@ window.printProductReport = function(products, opts = {}) {
 function calcStats(products) {
   const total   = products.length;
   const out     = products.filter(p => (p.qty ?? 0) <= 0).length;
-  const low     = products.filter(p => (p.qty ?? 0) > 0 && (p.qty ?? 0) <= 5).length;
+  const low     = products.filter(p => (p.qty ?? 0) > 0 && (p.minLevel ?? 0) > 0 && (p.qty ?? 0) <= (p.minLevel ?? 0)).length;
   const inStock = total - out - low;
   return { total, inStock, low, out };
 }
@@ -810,9 +816,11 @@ window.printRecentTransactionsReport = function(records, opts = {}) {
         const person  = r.createdBy || '\u2014';
         const items   = r.items || [];
         const docQty  = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
+        const extraLabel = isGrn ? 'Supplier' : 'Department';
+        const extraValue = isGrn ? (r.supplierName || '\u2014') : (r.department || '\u2014');
 
         const headerRow = `<tr class="cat-header-row">
-          <td colspan="4">${escH(docNo)} &nbsp;\u00b7&nbsp; ${dateStr} &nbsp;\u00b7&nbsp; ${personLabel}: ${escH(person)}</td>
+          <td colspan="4">${escH(docNo)} &nbsp;\u00b7&nbsp; ${dateStr} &nbsp;\u00b7&nbsp; ${extraLabel}: ${escH(extraValue)} &nbsp;\u00b7&nbsp; ${personLabel}: ${escH(person)}</td>
           <td class="c-num">${sign}${docQty.toLocaleString()}</td>
         </tr>`;
 
@@ -975,7 +983,7 @@ window.printHistoryReport = function(records, meta = {}) {
   const rows = records.length
     ? groups.map(group => {
         const catHeaderRow = `<tr class="cat-header-row">
-          <td colspan="7">${escH(group.category)}</td>
+          <td colspan="8">${escH(group.category)}</td>
         </tr>`;
 
         const itemRows = group.items.map((d, i) => {
@@ -988,6 +996,7 @@ window.printHistoryReport = function(records, meta = {}) {
           const qty      = d.qtyChanged != null ? fmtN(d.qtyChanged) : '—';
           const stAfter  = d.stockAfter  != null ? fmtN(d.stockAfter)  : '—';
           const rowBg    = i % 2 === 0 ? '#ffffff' : '#f7f8fa';
+          const deptOrSupplier = d.department || d.supplierName || '—';
           return `<tr style="background:${rowBg}">
             <td class="c-date">${fmtDT(d.createdAt)}</td>
             <td class="c-cat">${escH(d.category||'—')}</td>
@@ -995,18 +1004,19 @@ window.printHistoryReport = function(records, meta = {}) {
             <td class="c-tx"><span style="display:inline-block;padding:1px 7px;border-radius:3px;font-size:8pt;font-weight:700;text-transform:uppercase;letter-spacing:.3px;color:${txColor};background:${txBg};border:1px solid ${txBg}">${escH(action)}</span></td>
             <td class="c-num">${qty}</td>
             <td class="c-num">${stAfter}</td>
-            <td class="c-desc">${escH((d.description||'—').slice(0,70))}</td>
+            <td class="c-desc">${escH(deptOrSupplier)}</td>
+            <td class="c-desc">${escH((d.description||'—').slice(0,60))}</td>
           </tr>`;
         }).join('');
 
         const subtotalRow = `<tr class="cat-subtotal-row">
           <td colspan="4">${escH(group.category)} subtotal — ${group.items.length} record${group.items.length!==1?'s':''}</td>
-          <td class="c-num" colspan="3">Rcv: +${group.received.toLocaleString()} &nbsp;|&nbsp; Iss: −${group.issued.toLocaleString()}</td>
+          <td class="c-num" colspan="4">Rcv: +${group.received.toLocaleString()} &nbsp;|&nbsp; Iss: −${group.issued.toLocaleString()}</td>
         </tr>`;
 
         return catHeaderRow + itemRows + subtotalRow;
       }).join('')
-    : `<tr><td colspan="7" style="text-align:center;padding:16px;color:#888">No records.</td></tr>`;
+    : `<tr><td colspan="8" style="text-align:center;padding:16px;color:#888">No records.</td></tr>`;
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -1106,6 +1116,7 @@ window.printHistoryReport = function(records, meta = {}) {
   <div class="rpt-meta">
     <span>Period: <span class="meta-tag">${escH(rangeLabel)}</span></span>
     <span>Filter: <span class="meta-tag">${escH(actionLabel)}</span></span>
+    ${meta.departmentLabel ? `<span>Department: <span class="meta-tag">${escH(meta.departmentLabel)}</span></span>` : ''}
     ${meta.searchQuery ? `<span>Search: <span class="meta-tag">${escH(meta.searchQuery)}</span></span>` : ''}
   </div>
 
@@ -1141,6 +1152,7 @@ window.printHistoryReport = function(records, meta = {}) {
         <th class="c-tx">Transaction</th>
         <th class="c-num">Qty Changed</th>
         <th class="c-num">Stock After</th>
+        <th class="c-desc">Dept. / Supplier</th>
         <th class="c-desc">Description</th>
       </tr>
     </thead>
@@ -1149,7 +1161,7 @@ window.printHistoryReport = function(records, meta = {}) {
       <tr>
         <td colspan="4">TOTALS — ${records.length} record${records.length!==1?'s':''}</td>
         <td class="c-num">Rcv: +${totalReceived.toLocaleString()} &nbsp;|&nbsp; Iss: −${totalIssued.toLocaleString()}</td>
-        <td colspan="2"></td>
+        <td colspan="3"></td>
       </tr>
     </tfoot>
   </table>
@@ -1162,4 +1174,505 @@ window.printHistoryReport = function(records, meta = {}) {
 </html>`;
 
   printViaIframe(html, `History-Report-${new Date().toISOString().slice(0,10)}.pdf`);
+};
+
+/* ─── Generic CSV export helper ────────────────────────────────────────────
+   rows: array of arrays (first row = header). Values are stringified and
+   CSV-escaped (quoted if they contain a comma, quote, or newline).
+   ──────────────────────────────────────────────────────────────────────── */
+window.downloadCSV = function(rows, filename) {
+  function escCsv(val) {
+    const s = String(val ?? '');
+    if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  const csv = rows.map(row => row.map(escCsv).join(',')).join('\r\n');
+  // Prefix with a UTF-8 BOM so Excel opens accented/special characters correctly.
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = (filename || 'stockwise-export').replace(/\.csv$/i, '') + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 30000);
+};
+
+/* ─── Monthly Stock Consumption Report ──────────────────────────────────────
+   Shows total quantity issued per product for a selected month, broken
+   down by department. Uses the same Excel-style landscape layout as the
+   History / Recent Transactions reports.
+
+   @param {Object} data
+   *   data.monthLabel   {string}  — e.g. "July 2026"
+   *   data.departments  {Array}   — department names, in column order
+   *   data.rows         {Array}   — [{ category, productName, byDept: {dept: qty}, total }]
+   *   data.deptTotals   {Object}  — { dept: totalQty }
+   *   data.grandTotal   {number}
+   ──────────────────────────────────────────────────────────────────────── */
+window.printConsumptionReport = function(data) {
+  const now         = formatDateTime(new Date().toISOString());
+  const departments  = data.departments || [];
+  const rows         = data.rows || [];
+  const deptTotals   = data.deptTotals || {};
+  const grandTotal    = data.grandTotal || 0;
+  const monthLabel   = data.monthLabel || '—';
+
+  const deptHeaders = departments.map(d => `<th class="c-num">${escRpt(d)}</th>`).join('');
+  const deptFootCells = departments.map(d =>
+    `<td class="c-num">${(deptTotals[d] || 0).toLocaleString()}</td>`).join('');
+
+  const bodyRows = rows.length
+    ? rows.map((r, i) => {
+        const deptCells = departments.map(d =>
+          `<td class="c-num">${(r.byDept[d] || 0) ? (r.byDept[d]).toLocaleString() : '\u2014'}</td>`).join('');
+        return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f7f8fa'}">
+          <td class="c-cat">${escRpt(r.category || '\u2014')}</td>
+          <td class="c-prod">${escRpt(r.productName || '\u2014')}</td>
+          ${deptCells}
+          <td class="c-num" style="font-weight:700">${r.total.toLocaleString()}</td>
+        </tr>`;
+      }).join('')
+    : `<tr><td colspan="${departments.length + 3}" style="text-align:center;padding:16px;color:#888">No issues recorded for this month.</td></tr>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Monthly Stock Consumption Report — ${escRpt(monthLabel)}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; font-size:10pt; color:#111; background:#fff; }
+  .page { width:100%; max-width:1050px; margin:0 auto; padding:20px 24px; }
+
+  .rpt-header { display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; }
+  .rpt-co { font-size:18pt; font-weight:800; letter-spacing:-.5px; }
+  .rpt-co-sub { font-size:8pt; color:#555; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
+  .rpt-title-blk { text-align:right; }
+  .rpt-title { font-size:12pt; font-weight:700; }
+  .rpt-ts { font-size:8.5pt; color:#666; margin-top:2px; }
+
+  .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .s-box { border:1px solid #d1d5db; border-radius:3px; padding:8px 10px; text-align:center; }
+  .s-val { font-size:16pt; font-weight:800; line-height:1; }
+  .s-lbl { font-size:7.5pt; color:#555; margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
+  .s-box.s-amt { background:#fef2f2; border-color:#fca5a5; }
+
+  table { width:100%; border-collapse:collapse; font-size:9pt; }
+  thead th {
+    background:#1e3a5f; color:#fff; padding:6px 8px;
+    text-align:left; font-size:8pt; font-weight:700;
+    text-transform:uppercase; letter-spacing:.4px;
+    border:1px solid #1e3a5f; white-space:nowrap;
+  }
+  thead th.c-num { text-align:right; }
+  tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
+  tbody td.c-num  { text-align:right; font-variant-numeric:tabular-nums; }
+  tbody td.c-prod { font-weight:600; }
+  tbody td.c-cat  { color:#444; }
+
+  tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
+    background:#1e3a5f; color:#fff; font-size:9pt; }
+  tfoot td.c-num { text-align:right; }
+
+  .rpt-footer { margin-top:16px; padding-top:8px; border-top:1px solid #e5e7eb;
+    font-size:8pt; color:#9ca3af; text-align:center; }
+
+  @page { size:A4 landscape; margin:12mm 14mm; }
+  @media print {
+    body { font-size:9pt; }
+    .page { padding:0; }
+    thead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tfoot { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="rpt-header">
+    <div>
+      <div class="rpt-co">StockWise</div>
+      <div class="rpt-co-sub">Makiaza Farm Ltd. — Warehouse Management System</div>
+    </div>
+    <div class="rpt-title-blk">
+      <div class="rpt-title">Monthly Stock Consumption Report</div>
+      <div class="rpt-ts">${escRpt(monthLabel)} &nbsp;\u00b7&nbsp; Printed: ${now}</div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="s-box">
+      <div class="s-val">${rows.length}</div>
+      <div class="s-lbl">Products Issued</div>
+    </div>
+    <div class="s-box">
+      <div class="s-val">${departments.length}</div>
+      <div class="s-lbl">Departments</div>
+    </div>
+    <div class="s-box s-amt">
+      <div class="s-val" style="color:#991b1b">${grandTotal.toLocaleString()}</div>
+      <div class="s-lbl">Total Qty Issued</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Category</th>
+        <th>Product</th>
+        ${deptHeaders}
+        <th class="c-num">Total</th>
+      </tr>
+    </thead>
+    <tbody>${bodyRows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="2">TOTAL</td>
+        ${deptFootCells}
+        <td class="c-num">${grandTotal.toLocaleString()}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="rpt-footer">
+    StockWise WMS &nbsp;\u00b7&nbsp; Monthly Stock Consumption Report &nbsp;\u00b7&nbsp; ${escRpt(monthLabel)}
+  </div>
+</div>
+</body>
+</html>`;
+
+  printViaIframe(html, `Consumption-Report-${monthLabel.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+};
+
+/* ─── Purchase Request / Reorder Report ─────────────────────────────────────
+   Lists items currently at/below their minimum stock level, with a suggested
+   reorder quantity (adjustable by the Admin before export). Uses the same
+   receipt-style layout as the GRN/Issue receipts, since it's a single
+   actionable document rather than a tabular report.
+
+   @param {Object} data
+   *   data.items      {Array}  — [{ category, productName, qty, minLevel, reorderQty }]
+   *   data.requestNo  {string} — e.g. "PR-0007"
+   *   data.requestedBy {string}
+   ──────────────────────────────────────────────────────────────────────── */
+window.printPurchaseRequest = function(data) {
+  const items       = data.items || [];
+  const requestNo   = data.requestNo || ('PR-' + Date.now());
+  const requestedBy = data.requestedBy || '\u2014';
+  const totalItems  = items.length;
+  const totalReorderQty = items.reduce((s, i) => s + (Number(i.reorderQty) || 0), 0);
+
+  const rows = items.length
+    ? items.map((it, i) => `
+      <tr>
+        <td>${i + 1}</td>
+        <td>${escRpt(it.category) || '\u2014'}</td>
+        <td>${escRpt(it.productName) || '\u2014'}</td>
+        <td>${it.qty != null ? it.qty : '\u2014'}</td>
+        <td>${it.minLevel != null ? it.minLevel : '\u2014'}</td>
+        <td><strong>${it.reorderQty != null ? it.reorderQty : '\u2014'}</strong></td>
+      </tr>`).join('')
+    : '<tr><td colspan="6">No items below minimum stock level.</td></tr>';
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <title>Purchase Request — ${requestNo}</title>
+  <style>${RECEIPT_STYLES}</style>
+</head>
+<body>
+<div class="receipt">
+
+  <!-- Header -->
+  <div class="receipt-header">
+    <div>
+      <div class="company-name">StockWise</div>
+      <div class="company-sub">Makiaza Farm Ltd. — Warehouse Management System</div>
+    </div>
+    <div class="doc-title-block">
+      <div class="doc-type">Purchase Request</div>
+      <div class="doc-number">${requestNo}</div>
+      <span class="doc-status status-out">Reorder</span>
+    </div>
+  </div>
+
+  <!-- Meta -->
+  <div class="meta-grid">
+    <div class="meta-row">
+      <span class="meta-label">Request No.:</span>
+      <span class="meta-value"><strong>${requestNo}</strong></span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">Date:</span>
+      <span class="meta-value">${formatDate(new Date().toISOString())}</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">Requested By:</span>
+      <span class="meta-value">${escRpt(requestedBy)}</span>
+    </div>
+    <div class="meta-row">
+      <span class="meta-label">Printed:</span>
+      <span class="meta-value">${formatDateTime(new Date().toISOString())}</span>
+    </div>
+  </div>
+
+  <!-- Items -->
+  <div class="section-title">Items Below Minimum Stock Level</div>
+  <table>
+    <thead>
+      <tr>
+        <th style="width:36px">#</th>
+        <th>Category</th>
+        <th>Product Name</th>
+        <th>Current Qty</th>
+        <th>Min Level</th>
+        <th>Suggested Reorder Qty</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">Total — ${totalItems} item${totalItems !== 1 ? 's' : ''}</td>
+        <td>${totalReorderQty}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="notes-block">
+    <strong>Notes</strong>
+    Suggested reorder quantities bring each item back up to its minimum stock level plus a buffer, and may have been manually adjusted before this document was generated.
+  </div>
+
+  <!-- Signatures -->
+  <div class="sig-area">
+    <div class="sig-box">
+      <div class="sig-line"></div>
+      <div>Requested By</div>
+      <div class="sig-label">Name &amp; Signature</div>
+    </div>
+    <div class="sig-box">
+      <div class="sig-line"></div>
+      <div>Approved By</div>
+      <div class="sig-label">Name &amp; Signature</div>
+    </div>
+    <div class="sig-box">
+      <div class="sig-line"></div>
+      <div>Received By Supplier</div>
+      <div class="sig-label">Name &amp; Signature</div>
+    </div>
+  </div>
+
+  <div class="receipt-footer">
+    This is a system-generated Purchase Request from StockWise WMS &nbsp;·&nbsp;
+    ${requestNo} &nbsp;·&nbsp; ${formatDate(new Date().toISOString())}
+  </div>
+
+</div>
+</body>
+</html>`;
+
+  printViaIframe(html, `${requestNo}.pdf`);
+};
+
+/* ─── Expense Report ─────────────────────────────────────────────────────
+   Prints a landscape Excel-style report of expense entries, grouped by
+   category with subtotals — same visual language as printHistoryReport.
+
+   @param {Array} expenses  — [{ date, category, amount, description }]
+   @param {Object} meta
+   *   meta.categoryLabel {string} — e.g. "All Categories" or a single category
+   *   meta.monthLabel    {string} — e.g. "All Dates" or "2026-07"
+   ──────────────────────────────────────────────────────────────────────── */
+window.printExpensesReport = function(expenses, meta = {}) {
+  const now           = formatDateTime(new Date().toISOString());
+  const categoryLabel = meta.categoryLabel || 'All Categories';
+  const monthLabel    = meta.monthLabel && meta.monthLabel !== 'All Dates'
+    ? new Date(meta.monthLabel + '-01T00:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })
+    : 'All Dates';
+
+  function escR(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtD(dateStr) {
+    if (!dateStr) return '—';
+    return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' });
+  }
+  function fmtC(val) {
+    const n = Number(val) || 0;
+    return n.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  // Group by category (sorted alphabetically), items sorted oldest → newest within group.
+  const byCategory = {};
+  expenses.forEach(x => {
+    const cat = x.category || 'Uncategorised';
+    if (!byCategory[cat]) byCategory[cat] = [];
+    byCategory[cat].push(x);
+  });
+  const categories = Object.keys(byCategory).sort((a, b) => a.localeCompare(b));
+
+  const grandTotal = expenses.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+
+  const rows = expenses.length
+    ? categories.map(cat => {
+        const items = byCategory[cat].slice().sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+        const catTotal = items.reduce((s, x) => s + (Number(x.amount) || 0), 0);
+
+        const catHeaderRow = `<tr class="cat-header-row"><td colspan="4">${escR(cat)}</td></tr>`;
+
+        const itemRows = items.map((x, i) => {
+          const rowBg = i % 2 === 0 ? '#ffffff' : '#f7f8fa';
+          return `<tr style="background:${rowBg}">
+            <td class="c-date">${fmtD(x.date)}</td>
+            <td class="c-cat">${escR(cat)}</td>
+            <td class="c-desc">${escR(x.description || '—')}</td>
+            <td class="c-num">${fmtC(x.amount)}</td>
+          </tr>`;
+        }).join('');
+
+        const subtotalRow = `<tr class="cat-subtotal-row">
+          <td colspan="3">${escR(cat)} subtotal — ${items.length} item${items.length !== 1 ? 's' : ''}</td>
+          <td class="c-num">${fmtC(catTotal)}</td>
+        </tr>`;
+
+        return catHeaderRow + itemRows + subtotalRow;
+      }).join('')
+    : `<tr><td colspan="4" style="text-align:center;padding:16px;color:#888">No expenses recorded.</td></tr>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Expense Report</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; font-size:10pt; color:#111; background:#fff; }
+  .page { width:100%; max-width:900px; margin:0 auto; padding:20px 24px; }
+
+  .rpt-header { display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; }
+  .rpt-co { font-size:18pt; font-weight:800; letter-spacing:-.5px; }
+  .rpt-co-sub { font-size:8pt; color:#555; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
+  .rpt-title-blk { text-align:right; }
+  .rpt-title { font-size:12pt; font-weight:700; }
+  .rpt-ts { font-size:8.5pt; color:#666; margin-top:2px; }
+
+  .rpt-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; font-size:9pt; }
+  .meta-tag { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8;
+    padding:2px 10px; border-radius:3px; font-weight:600; }
+
+  .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
+  .s-box { border:1px solid #d1d5db; border-radius:3px; padding:8px 10px; text-align:center; }
+  .s-val { font-size:16pt; font-weight:800; line-height:1; }
+  .s-lbl { font-size:7.5pt; color:#555; margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
+  .s-box.s-blue { background:#eff6ff; border-color:#bfdbfe; }
+
+  table { width:100%; border-collapse:collapse; font-size:9pt; }
+  thead th {
+    background:#1e3a5f; color:#fff; padding:6px 8px;
+    text-align:left; font-size:8pt; font-weight:700;
+    text-transform:uppercase; letter-spacing:.4px;
+    border:1px solid #1e3a5f; white-space:nowrap;
+  }
+  thead th.c-num { text-align:right; }
+  tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
+  tbody td.c-num  { text-align:right; font-variant-numeric:tabular-nums; }
+  tbody td.c-date { white-space:nowrap; color:#555; font-size:8.5pt; }
+  tbody td.c-desc { color:#555; font-size:8.5pt; }
+  tbody td.c-cat  { color:#444; }
+
+  tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
+    background:#1e3a5f; color:#fff; font-size:9pt; }
+  tfoot td.c-num { text-align:right; }
+
+  tbody tr.cat-header-row td {
+    background:#1e3a5f; color:#fff; font-weight:700;
+    text-transform:uppercase; letter-spacing:.4px; font-size:9pt;
+    padding:6px 8px; border:1px solid #1e3a5f;
+  }
+  tbody tr.cat-subtotal-row td {
+    background:#eff6ff; color:#1e3a5f; font-weight:700; font-size:8.5pt;
+    padding:5px 8px; border:1px solid #bfdbfe;
+  }
+  tbody tr.cat-subtotal-row td.c-num { text-align:right; }
+
+  .rpt-footer { margin-top:16px; padding-top:8px; border-top:1px solid #e5e7eb;
+    font-size:8pt; color:#9ca3af; text-align:center; }
+
+  @page { size:A4 portrait; margin:14mm; }
+  @media print {
+    body { font-size:9pt; }
+    .page { padding:0; }
+    thead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tfoot { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tbody tr { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="rpt-header">
+    <div>
+      <div class="rpt-co">StockWise</div>
+      <div class="rpt-co-sub">Warehouse Management System</div>
+    </div>
+    <div class="rpt-title-blk">
+      <div class="rpt-title">Expense Report</div>
+      <div class="rpt-ts">Printed: ${now}</div>
+    </div>
+  </div>
+
+  <div class="rpt-meta">
+    <span>Period: <span class="meta-tag">${escR(monthLabel)}</span></span>
+    <span>Category: <span class="meta-tag">${escR(categoryLabel)}</span></span>
+  </div>
+
+  <div class="summary">
+    <div class="s-box">
+      <div class="s-val">${expenses.length}</div>
+      <div class="s-lbl">Total Entries</div>
+    </div>
+    <div class="s-box">
+      <div class="s-val">${categories.length}</div>
+      <div class="s-lbl">Categories</div>
+    </div>
+    <div class="s-box s-blue">
+      <div class="s-val">${fmtC(grandTotal)}</div>
+      <div class="s-lbl">Grand Total</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th class="c-date">Date</th>
+        <th class="c-cat">Category</th>
+        <th class="c-desc">Description</th>
+        <th class="c-num">Amount</th>
+      </tr>
+    </thead>
+    <tbody>${rows}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="3">GRAND TOTAL — ${expenses.length} entr${expenses.length !== 1 ? 'ies' : 'y'}</td>
+        <td class="c-num">${fmtC(grandTotal)}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="rpt-footer">
+    StockWise WMS &nbsp;·&nbsp; Expense Report &nbsp;·&nbsp; ${now}
+  </div>
+</div>
+</body>
+</html>`;
+
+  printViaIframe(html, `Expense-Report-${new Date().toISOString().slice(0,10)}.pdf`);
 };

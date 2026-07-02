@@ -15,11 +15,11 @@
 
   <main class="main-content">
     <header class="page-header">
-      <h2>📦 Products</h2>
+      <h2>Products</h2>
       <div style="display:flex;gap:10px;align-items:center;">
         <button class="btn-ghost" id="printReportBtn"
                 onclick="printCurrentReport()"
-                style="font-size:13px;padding:6px 14px;">🖨 Print Report</button>
+                style="font-size:13px;padding:6px 14px;">Print Report</button>
         <button class="btn-primary" id="addProductBtn" data-min-role="staff">+ Add Product</button>
       </div>
     </header>
@@ -46,6 +46,10 @@
         <span class="stat-label">Out of Stock</span>
         <span class="stat-value" id="statOut">0</span>
       </div>
+      <div class="stat-card stat-card--warning">
+        <span class="stat-label">Low Stock</span>
+        <span class="stat-value" id="statLow">0</span>
+      </div>
     </div>
 
     <!-- Products Table -->
@@ -57,6 +61,7 @@
             <th>Product Name</th>
             <th>Description</th>
             <th>Current Stock</th>
+            <th>Min Level</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -94,9 +99,15 @@
           <textarea id="description" rows="2" placeholder="Optional product notes…"></textarea>
         </div>
 
-        <div class="field-group" style="max-width:200px">
-          <label>Current Stock *</label>
-          <input type="number" id="quantity" min="0" value="0" required />
+        <div class="field-row">
+          <div class="field-group" style="max-width:200px">
+            <label>Current Stock *</label>
+            <input type="number" id="quantity" min="0" value="0" required />
+          </div>
+          <div class="field-group" style="max-width:200px">
+            <label>Minimum Level *</label>
+            <input type="number" id="minLevel" min="0" value="0" required />
+          </div>
         </div>
 
         <div id="formError" class="error-msg hidden"></div>

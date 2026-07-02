@@ -11,6 +11,7 @@ const auth = () => window.firebaseAuth;
 
 let productList  = [];
 let categoryList = [];
+let supplierList = [];
 let rowCount     = 0;
 let recentGrnsData = [];
 
@@ -27,9 +28,29 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 
   await loadProducts();
+  await loadSuppliers();
   addLineItemRow();
   loadRecentGrns();
 });
+
+/* ─── Suppliers ─────────────────────────────────────────────────────────── */
+
+async function loadSuppliers() {
+  const sel  = document.getElementById('grnSupplier');
+  const hint = document.getElementById('noSuppliersHint');
+  try {
+    const snap = await db().collection('suppliers').orderBy('name').get();
+    supplierList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+  } catch (err) {
+    console.error('Could not load suppliers:', err);
+    supplierList = [];
+  }
+  if (sel) {
+    sel.innerHTML = '<option value="">— Select supplier —</option>' +
+      supplierList.map(s => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('');
+  }
+  if (hint) hint.classList.toggle('hidden', supplierList.length > 0);
+}
 
 /* ─── Products ──────────────────────────────────────────────────────────── */
 
@@ -309,9 +330,22 @@ function resetForm() {
 async function submitGrn(e) {
   e.preventDefault();
 
+  const supplierSel  = document.getElementById('grnSupplier');
+  const supplierId   = supplierSel?.value || '';
+  if (!supplierId) { showToast('Please select a supplier.', 'error'); return; }
+  const supplierName = supplierSel.selectedOptions[0]?.textContent.trim() || '';
+
   const items = collectLineItems();
   if (!items.length) {
     showToast('Add at least one item with a quantity.', 'error'); return;
+  }
+
+  const docUrlInput   = document.getElementById('grnDocUrl');
+  const docLabelInput = document.getElementById('grnDocLabel');
+  const documentUrl   = docUrlInput?.value.trim() || '';
+  const documentLabel = docLabelInput?.value.trim() || '';
+  if (documentUrl && !/^https?:\/\//i.test(documentUrl)) {
+    showToast('Document link must start with http:// or https://', 'error'); return;
   }
 
   const submitBtn = document.querySelector('#grnForm button[type="submit"]');
@@ -344,7 +378,9 @@ async function submitGrn(e) {
 
     const batch  = db().batch();
     const txRef  = db().collection('transactions').doc();
-    batch.set(txRef, { type:'grn', grnNumber, items, createdBy: user?.email || user?.uid || 'unknown', createdAt: now });
+    batch.set(txRef, { type:'grn', grnNumber, items, supplierId, supplierName,
+      documentUrl, documentLabel,
+      createdBy: user?.email || user?.uid || 'unknown', createdAt: now });
 
     items.forEach(item => {
       batch.update(db().collection('products').doc(item.productId),
@@ -354,7 +390,8 @@ async function submitGrn(e) {
       const h = db().collection('history').doc();
       batch.set(h, { actionType:'Received', category:item.category, productName:item.productName,
         description:item.description, qtyChanged:item.qty, stockBefore:item.stockBefore ?? 0,
-        stockAfter:(item.stockBefore ?? 0)+item.qty, refNumber:grnNumber,
+        stockAfter:(item.stockBefore ?? 0)+item.qty, refNumber:grnNumber, supplierId, supplierName,
+        documentUrl, documentLabel,
         performedBy:user?.email||user?.uid||'unknown', createdAt:now });
     });
 
@@ -402,9 +439,16 @@ function renderGrnRows(grns) {
     const items    = grn.items || [];
     const totalQty = items.reduce((s, i) => s + (Number(i.qty) || 0), 0);
 
+    const docChip = grn.documentUrl
+      ? `<a href="${escHtml(grn.documentUrl)}" target="_blank" rel="noopener"
+            class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-left:8px;text-decoration:none"
+            title="Open attached document">📎 ${escHtml(grn.documentLabel || 'Document')}</a>`
+      : '';
+
     const headerRow = `<tr class="history-category-row">
-      <td><strong>${escHtml(grn.grnNumber || '—')}</strong></td>
-      <td colspan="3">${dateStr}</td>
+      <td><strong>${escHtml(grn.grnNumber || '—')}</strong>${docChip}</td>
+      <td colspan="2">${dateStr}</td>
+      <td>${escHtml(grn.supplierName || '—')}</td>
       <td colspan="2">${escHtml(grn.createdBy || '—')}</td>
     </tr>`;
 
@@ -463,11 +507,23 @@ async function viewGrnDetail(id) {
       <td>${escHtml(i.description||'—')}</td>
       <td>${i.qty}</td>
     </tr>`).join('');
+    const docSection = g.documentUrl
+      ? `<div style="margin-top:12px">
+          <strong>Attached Document:</strong>
+          <a href="${escHtml(g.documentUrl)}" target="_blank" rel="noopener"
+             style="color:var(--color-primary);margin-left:6px">
+            📎 ${escHtml(g.documentLabel || 'View document')}
+          </a>
+        </div>`
+      : '';
+
     content.innerHTML = `
       <div class="detail-meta">
         <span><strong>Date / Time:</strong> ${dateStr}</span>
+        <span><strong>Supplier:</strong> ${escHtml(g.supplierName||'—')}</span>
         <span><strong>Received by:</strong> ${g.createdBy||'—'}</span>
       </div>
+      ${docSection}
       <div class="table-scroll-wrap" style="margin-top:16px">
         <table class="data-table">
           <thead><tr><th>Category</th><th>Product</th><th>Description</th><th>Qty</th></tr></thead>

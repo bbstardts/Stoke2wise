@@ -21,30 +21,49 @@
         <h2>Dashboard</h2>
         <span id="currentDate" class="date-label"></span>
       </div>
-      <button class="btn-ghost" id="refreshBtn">↻ Refresh</button>
+      <button class="btn-ghost" id="refreshBtn">Refresh</button>
     </header>
 
     <!-- KPI Cards -->
     <section class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-icon kpi-icon--blue">▦</div>
+        <div class="kpi-icon kpi-icon--blue">P</div>
         <span class="kpi-label">Total Products</span>
         <span class="kpi-value" id="totalProducts"><span class="skeleton"></span></span>
       </div>
       <div class="kpi-card kpi-green">
-        <div class="kpi-icon kpi-icon--green">↓</div>
+        <div class="kpi-icon kpi-icon--green">Q</div>
         <span class="kpi-label">Total Stock Qty</span>
         <span class="kpi-value" id="totalStockQty"><span class="skeleton"></span></span>
       </div>
       <div class="kpi-card kpi-amber">
-        <div class="kpi-icon kpi-icon--amber">↑</div>
+        <div class="kpi-icon kpi-icon--amber">I</div>
         <span class="kpi-label">Issued Today</span>
         <span class="kpi-value" id="issuedToday"><span class="skeleton"></span></span>
       </div>
       <div class="kpi-card kpi-red">
-        <div class="kpi-icon kpi-icon--red">⚠</div>
+        <div class="kpi-icon kpi-icon--red">!</div>
         <span class="kpi-label">Out of Stock</span>
         <span class="kpi-value" id="lowStockCount"><span class="skeleton"></span></span>
+      </div>
+    </section>
+
+    <!-- Secondary KPI Cards: GRNs/Issues this month, top product this week -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-icon kpi-icon--blue">G</div>
+        <span class="kpi-label">GRNs This Month</span>
+        <span class="kpi-value" id="grnsThisMonth"><span class="skeleton"></span></span>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon kpi-icon--amber">S</div>
+        <span class="kpi-label">Issues This Month</span>
+        <span class="kpi-value" id="issuesThisMonth"><span class="skeleton"></span></span>
+      </div>
+      <div class="kpi-card" style="grid-column: span 2;">
+        <div class="kpi-icon kpi-icon--blue">T</div>
+        <span class="kpi-label">Most Issued Product This Week</span>
+        <span class="kpi-value" id="topProductThisWeek" style="font-size:20px;"><span class="skeleton"></span></span>
       </div>
     </section>
 
@@ -100,21 +119,42 @@
     <!-- Low Stock Alerts -->
     <section class="section-block">
       <div class="section-header">
-        <h3 class="section-title">⚠ Out of Stock Items</h3>
-        <a href="products.html" class="section-link">Manage products →</a>
+        <h3 class="section-title">Low Stock Alerts</h3>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <button class="btn-export-pdf" id="generatePurchaseRequestBtn" data-min-role="admin" disabled>
+            Generate Purchase Request
+          </button>
+          <a href="products.html" class="section-link">Manage products →</a>
+        </div>
       </div>
       <div class="table-scroll-wrap"><table class="data-table">
         <thead>
           <tr>
             <th>Category</th>
             <th>Product</th>
+            <th>Current Qty</th>
+            <th>Min Level</th>
             <th>Status</th>
           </tr>
         </thead>
         <tbody id="lowStockBody">
-          <tr><td colspan="3" class="table-loading">Loading…</td></tr>
+          <tr><td colspan="5" class="table-loading">Loading…</td></tr>
         </tbody>
       </table></div>
+    </section>
+
+    <!-- Stock Movement Chart -->
+    <section class="section-block">
+      <div class="section-header">
+        <h3 class="section-title">Stock Movement (Received vs Issued)</h3>
+        <div class="chart-legend">
+          <span class="chart-legend-item"><span class="chart-dot chart-dot--in"></span>Received</span>
+          <span class="chart-legend-item"><span class="chart-dot chart-dot--out"></span>Issued</span>
+        </div>
+      </div>
+      <div id="movementChart" class="movement-chart">
+        <div class="table-loading">Loading…</div>
+      </div>
     </section>
 
     <!-- Activity Feed -->
@@ -130,6 +170,43 @@
 
   </main>
 
+  <!-- ── Purchase Request Modal ── -->
+  <div id="purchaseRequestModal" class="modal hidden">
+    <div class="modal-box modal-box--wide">
+      <div class="modal-header">
+        <h3>Generate Purchase Request</h3>
+        <button class="modal-close" id="closePurchaseRequestModal">✕</button>
+      </div>
+
+      <p class="pr-modal-hint">
+        Suggested reorder quantities bring each item back up to its minimum level plus a small buffer.
+        Adjust any quantity below before exporting.
+      </p>
+
+      <div class="table-scroll-wrap">
+        <table class="data-table" id="purchaseRequestTable">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Product</th>
+              <th>Current Qty</th>
+              <th>Min Level</th>
+              <th>Reorder Qty</th>
+            </tr>
+          </thead>
+          <tbody id="purchaseRequestBody">
+            <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-ghost" id="cancelPurchaseRequest">Cancel</button>
+        <button type="button" class="btn-export-pdf" id="confirmPurchaseRequestBtn">Export PDF</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -137,6 +214,7 @@
 
   <script src="../js/firebase-config.js"></script>
   <script src="../js/auth-guard.js"></script>
+  <script src="../js/role-gate.js"></script>
   <script src="../js/sidebar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
   <script src="../js/print.js"></script>
