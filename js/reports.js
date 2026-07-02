@@ -19,8 +19,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const thead        = document.getElementById('consumptionThead');
   const tbody        = document.getElementById('consumptionBody');
   const tableTitle    = document.getElementById('reportTableTitle');
+  const usageRanking  = document.getElementById('usageRanking');
+  const usageToggle   = document.getElementById('usageToggle');
 
   let currentReport = null; // last computed { monthLabel, departments, rows, deptTotals, grandTotal }
+  let usageMode = 'most'; // 'most' | 'least'
 
   // Default to the current month.
   const now = new Date();
@@ -29,6 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
   monthInput.addEventListener('change', () => loadReport());
   exportCsvBtn.addEventListener('click', () => exportCSV());
   exportPdfBtn.addEventListener('click', () => exportPDF());
+
+  usageToggle.addEventListener('click', (e) => {
+    const btn = e.target.closest('.usage-toggle-btn');
+    if (!btn) return;
+    usageMode = btn.dataset.mode;
+    usageToggle.querySelectorAll('.usage-toggle-btn').forEach(b =>
+      b.classList.toggle('is-active', b === btn));
+    if (currentReport) renderUsageRanking(currentReport);
+  });
 
   loadReport();
 
@@ -59,6 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to load consumption report:', err);
       tbody.innerHTML = `<tr><td colspan="3" class="table-empty">Failed to load: ${esc(err.message)}</td></tr>`;
+      usageRanking.innerHTML = `<div class="chart-empty">Failed to load: ${esc(err.message)}</div>`;
       currentReport = null;
       exportCsvBtn.disabled = true;
       exportPdfBtn.disabled = true;
@@ -115,6 +128,8 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('statTotalQty').textContent    = data.grandTotal.toLocaleString();
     tableTitle.textContent = `Consumption by Product & Department — ${data.monthLabel}`;
 
+    renderUsageRanking(data);
+
     // Header row: Category, Product, one column per department, Total.
     thead.innerHTML = `<tr>
       <th>Category</th>
@@ -142,8 +157,43 @@ document.addEventListener('DOMContentLoaded', () => {
     exportPdfBtn.disabled = false;
   }
 
+  /**
+   * Renders the Product Usage Ranking panel — top N products by total qty
+   * issued this month, most-used or least-used depending on usageMode.
+   * Reuses the same aggregated `rows` the consumption table already has,
+   * so no extra Firestore reads are needed.
+   */
+  function renderUsageRanking(data) {
+    if (!data.rows.length) {
+      usageRanking.innerHTML = `<div class="chart-empty">No stock was issued in ${esc(data.monthLabel)}.</div>`;
+      return;
+    }
+
+    const LIMIT = 8;
+    const sorted = [...data.rows].sort((a, b) =>
+      usageMode === 'most' ? b.total - a.total : a.total - b.total
+    );
+    const top = sorted.slice(0, LIMIT);
+    const maxQty = Math.max(...top.map(r => r.total), 1);
+    const barClass = usageMode === 'least' ? 'usage-bar--least' : '';
+
+    usageRanking.innerHTML = top.map((r, i) => {
+      const pct = Math.max((r.total / maxQty) * 100, 3); // 3% floor so tiny bars stay visible
+      return `
+      <div class="usage-row">
+        <span class="usage-rank">${i + 1}</span>
+        <span class="usage-name" title="${esc(r.productName)}">${esc(r.productName)}</span>
+        <span class="usage-bar-track">
+          <span class="usage-bar-fill ${barClass}" style="width:${pct}%"></span>
+        </span>
+        <span class="usage-qty">${r.total.toLocaleString()}</span>
+      </div>`;
+    }).join('');
+  }
+
   function setLoading() {
     tbody.innerHTML = `<tr><td colspan="3" class="table-loading">Loading…</td></tr>`;
+    usageRanking.innerHTML = `<div class="chart-empty">Loading…</div>`;
     exportCsvBtn.disabled = true;
     exportPdfBtn.disabled = true;
   }

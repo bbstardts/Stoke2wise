@@ -46,3 +46,81 @@
   font-weight: 700;
   color: var(--color-text);
 }
+
+/* ── Product Usage Ranking ── */
+.usage-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+.usage-toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.usage-toggle-btn:hover { color: var(--color-text); }
+.usage-toggle-btn.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.usage-ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 6px 4px 4px;
+}
+.usage-row {
+  display: grid;
+  grid-template-columns: 22px minmax(120px, 1fr) 2fr 60px;
+  align-items: center;
+  gap: 12px;
+}
+.usage-rank {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.usage-name {
+  font-size: 13px;
+  color: var(--color-text);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.usage-bar-track {
+  height: 10px;
+  background: var(--color-bg);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+}
+.usage-bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: var(--color-primary);
+  transition: width 0.4s ease;
+}
+.usage-bar-fill.usage-bar--least {
+  background: var(--color-text-muted);
+}
+.usage-qty {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
