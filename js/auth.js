@@ -186,6 +186,183 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── GOOGLE SIGN-IN / SIGN-UP ─────────────────────────────────────────────
+  const googleBtn = document.getElementById('googleSignInBtn');
+  if (googleBtn) {
+    googleBtn.addEventListener('click', async () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      googleBtn.disabled = true;
+      try {
+        const result = await auth.signInWithPopup(provider);
+        await handlePostAuth(result.user, {
+          fullName: result.user.displayName || '',
+          email: result.user.email || '',
+          phone: ''
+        }, /* emailKnown */ true, /* phoneKnown */ false);
+      } catch (err) {
+        console.error('Google sign-in error:', err.code, err.message);
+        if (err.code !== 'auth/popup-closed-by-user') {
+          alert(friendlyError(err.code));
+        }
+      } finally {
+        googleBtn.disabled = false;
+      }
+    });
+  }
+
+  // ── PHONE SIGN-IN / SIGN-UP ──────────────────────────────────────────────
+  const showPhoneBtn = document.getElementById('showPhoneLoginBtn');
+  const phoneForm     = document.getElementById('phoneForm');
+  const otpForm       = document.getElementById('otpForm');
+  let confirmationResult = null;
+
+  if (showPhoneBtn && phoneForm) {
+    showPhoneBtn.addEventListener('click', () => {
+      phoneForm.classList.toggle('hidden');
+    });
+  }
+
+  if (phoneForm) {
+    phoneForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
+      const phoneError  = document.getElementById('phoneError');
+      const btn = document.getElementById('sendCodeBtn');
+      phoneError.classList.add('hidden');
+      setLoading(btn, true, 'Sending…');
+      try {
+        if (!window.recaptchaVerifier) {
+          window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
+        }
+        confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
+        phoneForm.classList.add('hidden');
+        otpForm.classList.remove('hidden');
+      } catch (err) {
+        console.error('Phone sign-in error:', err.code, err.message);
+        showFormError(phoneError, friendlyError(err.code) || 'Could not send code. Check the number and try again.');
+        if (window.recaptchaVerifier) {
+          window.recaptchaVerifier.render().then((id) => grecaptcha.reset(id)).catch(() => {});
+        }
+      } finally {
+        setLoading(btn, false, 'Send Code');
+      }
+    });
+  }
+
+  if (otpForm) {
+    otpForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = document.getElementById('otpCode').value.trim();
+      const otpError = document.getElementById('otpError');
+      const btn = document.getElementById('verifyCodeBtn');
+      otpError.classList.add('hidden');
+      setLoading(btn, true, 'Verifying…');
+      try {
+        const cred = await confirmationResult.confirm(code);
+        await handlePostAuth(cred.user, {
+          fullName: '',
+          email: '',
+          phone: cred.user.phoneNumber || ''
+        }, /* emailKnown */ false, /* phoneKnown */ true);
+      } catch (err) {
+        console.error('OTP verify error:', err.code, err.message);
+        showFormError(otpError, 'Invalid code. Please try again.');
+      } finally {
+        setLoading(btn, false, 'Verify Code');
+      }
+    });
+  }
+
+  // ── Route new vs. returning users after Google/Phone auth ───────────────
+  async function handlePostAuth(user, prefill, emailKnown, phoneKnown) {
+    if (!db) { window.location.href = 'pages/dashboard.html'; return; }
+
+    const doc = await db.collection('users').doc(user.uid).get();
+
+    if (doc.exists) {
+      if (doc.data().approved === false) {
+        await auth.signOut();
+        window.location.href = 'index.html?pending=1';
+        return;
+      }
+      window.location.href = 'pages/dashboard.html';
+      return;
+    }
+
+    // Brand-new account → ask for their details before submitting for approval
+    openCompleteProfile(user, prefill, emailKnown, phoneKnown);
+  }
+
+  function openCompleteProfile(user, prefill, emailKnown, phoneKnown) {
+    const modal = document.getElementById('completeProfileModal');
+    if (!modal) { finishSignup(user, prefill); return; }
+
+    const nameField  = document.getElementById('cpFullName');
+    const emailField = document.getElementById('cpEmail');
+    const phoneField = document.getElementById('cpPhone');
+    const cpError    = document.getElementById('cpError');
+    const cpCancel   = document.getElementById('cpCancelBtn');
+
+    nameField.value     = prefill.fullName || '';
+    emailField.value    = prefill.email || '';
+    phoneField.value    = prefill.phone || '';
+    emailField.disabled = emailKnown;
+    phoneField.disabled = phoneKnown;
+    cpError.classList.add('hidden');
+
+    modal.classList.remove('hidden');
+
+    const form = document.getElementById('completeProfileForm');
+    form.onsubmit = async (e) => {
+      e.preventDefault();
+      const fullName = nameField.value.trim();
+      const email    = emailField.value.trim();
+      const phone    = phoneField.value.trim();
+
+      if (!fullName) { showFormError(cpError, 'Please enter your full name.'); return; }
+      if (!email && !phone) { showFormError(cpError, 'Please provide an email or phone number.'); return; }
+
+      const btn = document.getElementById('cpSubmitBtn');
+      setLoading(btn, true, 'Submitting…');
+      try {
+        await finishSignup(user, { fullName, email, phone });
+        modal.classList.add('hidden');
+      } catch (err) {
+        console.error('Profile completion error:', err);
+        showFormError(cpError, 'Something went wrong. Please try again.');
+        setLoading(btn, false, 'Finish & Submit for Approval');
+      }
+    };
+
+    if (cpCancel) {
+      cpCancel.onclick = async () => {
+        modal.classList.add('hidden');
+        try { await auth.signOut(); } catch (_) {}
+      };
+    }
+  }
+
+  async function finishSignup(user, { fullName, email, phone }) {
+    if (fullName) {
+      try { await user.updateProfile({ displayName: fullName }); } catch (_) {}
+    }
+
+    await db.collection('users').doc(user.uid).set({
+      displayName: fullName || user.displayName || '',
+      email:       email || user.email || '',
+      phone:       phone || user.phoneNumber || '',
+      role:        'staff',
+      approved:    false,
+      status:      'pending',
+      createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+    });
+
+    notifyAdminOfNewSignup(fullName || user.displayName || 'New user', email || user.email || phone || user.phoneNumber || '');
+
+    await auth.signOut();
+    window.location.href = 'index.html?pending=1';
+  }
+
   // ── Helpers ───────────────────────────────────────────────────────────────
   function setLoading(btn, isLoading, text) {
     btn.textContent = text;
