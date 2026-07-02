@@ -47,8 +47,8 @@ const saveBtnText     = document.getElementById('saveBtnText');
 const saveBtnSpinner  = document.getElementById('saveBtnSpinner');
 const existingSelect  = document.getElementById('existingProductSelect');
 const priceUSDInput   = document.getElementById('priceUSD');
-const pricePreview    = document.getElementById('pricePreview');
-const previewLabel    = document.getElementById('previewCurrencyLabel');
+const previousPriceLabel = document.getElementById('previousPriceLabel');
+const priceInputLabel = document.getElementById('priceInputCurrencyLabel');
 const rateStatus      = document.getElementById('rateStatus');
 const prevPageBtn     = document.getElementById('prevPageBtn');
 const nextPageBtn     = document.getElementById('nextPageBtn');
@@ -64,7 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
   sortSelect.addEventListener('change',     renderCurrentView);
   priceForm.addEventListener('submit',      handleFormSubmit);
   existingSelect.addEventListener('change', handleExistingProductPick);
-  priceUSDInput.addEventListener('input',   updatePreview);
+  // (no live preview listener — "Previous price" is a static snapshot set on modal open)
   prevPageBtn.addEventListener('click',     () => { if (currentPage > 1) { currentPage--; renderCurrentView(); } });
   nextPageBtn.addEventListener('click',     () => { currentPage++; renderCurrentView(); });
 
@@ -77,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
   window.CurrencyHelper.onCurrencyChange((currency) => {
     activeCurrency = currency;
     document.getElementById('statCurrency').textContent = currency;
-    previewLabel.textContent = currency;
+    priceInputLabel.textContent = currency;
     renderCurrentView();
   });
 
@@ -163,11 +163,10 @@ async function renderCurrentView() {
 
   activeCurrency = await window.CurrencyHelper.getActiveCurrency();
   document.getElementById('statCurrency').textContent = activeCurrency;
-  previewLabel.textContent = activeCurrency;
+  priceInputLabel.textContent = activeCurrency;
 
   await renderTable(rows);
   await updateStats(rows);
-  updatePreview();
 }
 
 async function renderTable(rows) {
@@ -260,7 +259,7 @@ function populateExistingProductSelect() {
     allProducts.map(p => `<option value="${p.id}" ${p.id === current ? 'selected' : ''}>${escPHtml(p.name)} (${escPHtml(p.category || 'Uncategorized')})</option>`).join('');
 }
 
-function handleExistingProductPick() {
+async function handleExistingProductPick() {
   const id = existingSelect.value;
   if (!id) return;
   const p = allProducts.find(x => x.id === id);
@@ -270,26 +269,46 @@ function handleExistingProductPick() {
   document.getElementById('linkedProductId').value = p.id;
 
   const existingPrice = allPrices.find(pr => pr.productId === id);
-  priceUSDInput.value = existingPrice ? existingPrice.priceUSD : '';
-  updatePreview();
+  await setPriceFieldsFromUSD(existingPrice ? existingPrice.priceUSD : null);
 }
 
-// ── Preview conversion in modal ──────────────────────────────────────
-async function updatePreview() {
-  const val = parseFloat(priceUSDInput.value);
-  if (isNaN(val)) { pricePreview.value = ''; return; }
-  const currency = await window.CurrencyHelper.getActiveCurrency();
-  const converted = await window.CurrencyHelper.convert(val, currency);
-  pricePreview.value = window.CurrencyHelper.format(converted, currency);
+// Convert a value in the active display currency back to USD.
+async function toUSD(displayAmount) {
+  if (displayAmount == null || isNaN(displayAmount)) return null;
+  const rates = await window.CurrencyHelper.getRates();
+  const rate = rates[activeCurrency] ?? 1;
+  if (!rate) return displayAmount;
+  return displayAmount / rate;
+}
+
+function roundForInput(n) {
+  if (n == null || isNaN(n)) return '';
+  return Math.round(n * 100) / 100;
+}
+
+// Populate the price input and the static "Previous price" label from a
+// stored USD value, converting once into the active display currency.
+// The "Previous price" label is a frozen snapshot — it does not update as
+// the user types in the price field.
+async function setPriceFieldsFromUSD(priceUSD) {
+  if (priceUSD != null) {
+    const displayVal = await window.CurrencyHelper.convert(priceUSD, activeCurrency);
+    priceUSDInput.value = roundForInput(displayVal);
+    previousPriceLabel.textContent = window.CurrencyHelper.format(displayVal, activeCurrency);
+  } else {
+    priceUSDInput.value = '';
+    previousPriceLabel.textContent = '—';
+  }
 }
 
 // ── Modal open/close ──────────────────────────────────────────────────
-function openModal(rowId) {
+async function openModal(rowId) {
   priceForm.reset();
   document.getElementById('priceDocId').value = '';
   document.getElementById('linkedProductId').value = '';
   existingSelect.value = '';
-  pricePreview.value = '';
+  previousPriceLabel.textContent = '—';
+  priceInputLabel.textContent = activeCurrency;
   hideFormError();
 
   if (rowId) {
@@ -300,14 +319,13 @@ function openModal(rowId) {
       document.getElementById('linkedProductId').value = row.productId || '';
       document.getElementById('category').value = row.category === '—' ? '' : row.category;
       document.getElementById('productName').value = row.name;
-      priceUSDInput.value = row.priceUSD != null ? row.priceUSD : '';
+      await setPriceFieldsFromUSD(row.priceUSD);
       if (row.productId) existingSelect.value = row.productId;
     }
   } else {
     document.getElementById('modalTitle').textContent = 'Add Price';
   }
 
-  updatePreview();
   priceModal.classList.remove('hidden');
 }
 
@@ -320,14 +338,32 @@ async function handleFormSubmit(e) {
   e.preventDefault();
   hideFormError();
 
-  const category   = document.getElementById('category').value.trim();
-  const name       = document.getElementById('productName').value.trim();
-  const priceUSD   = Number(priceUSDInput.value);
-  const docId      = document.getElementById('priceDocId').value;
-  const productId  = document.getElementById('linkedProductId').value || null;
+  const category    = document.getElementById('category').value.trim();
+  const name        = document.getElementById('productName').value.trim();
+  const enteredVal  = Number(priceUSDInput.value);
+  const docId       = document.getElementById('priceDocId').value;
+  const productId   = document.getElementById('linkedProductId').value || null;
 
-  if (!name)               { showFormError('Product name is required.'); return; }
-  if (isNaN(priceUSD) || priceUSD < 0) { showFormError('Enter a valid price.'); return; }
+  if (!name)                 { showFormError('Product name is required.'); return; }
+  if (isNaN(enteredVal) || enteredVal < 0) { showFormError('Enter a valid price.'); return; }
+
+  // The input is in the active display currency. If the displayed value
+  // still matches what the existing stored USD price converts to (i.e. the
+  // user didn't actually touch the price), keep the original USD value
+  // untouched rather than re-deriving it — this avoids tiny rounding drift
+  // from repeated convert/reverse-convert on every save.
+  let priceUSD;
+  const original = docId ? allPrices.find(pr => pr.id === docId) : null;
+  if (original && original.priceUSD != null) {
+    const originalDisplayVal = roundForInput(await window.CurrencyHelper.convert(original.priceUSD, activeCurrency));
+    if (Number(originalDisplayVal) === Number(roundForInput(enteredVal))) {
+      priceUSD = original.priceUSD;
+    } else {
+      priceUSD = await toUSD(enteredVal);
+    }
+  } else {
+    priceUSD = await toUSD(enteredVal);
+  }
 
   const data = { category, name, priceUSD, productId };
   const now  = new Date().toISOString();
