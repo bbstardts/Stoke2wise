@@ -147,9 +147,16 @@
     <section class="section-block">
       <div class="section-header">
         <h3 class="section-title">Stock Movement (Received vs Issued)</h3>
-        <div class="chart-legend">
-          <span class="chart-legend-item"><span class="chart-dot chart-dot--in"></span>Received</span>
-          <span class="chart-legend-item"><span class="chart-dot chart-dot--out"></span>Issued</span>
+        <div style="display:flex; gap:14px; align-items:center;">
+          <div class="chart-legend">
+            <span class="chart-legend-item"><span class="chart-dot chart-dot--in"></span>Received</span>
+            <span class="chart-legend-item"><span class="chart-dot chart-dot--out"></span>Issued</span>
+          </div>
+          <div class="usage-toggle" id="movementRangeToggle">
+            <button type="button" class="usage-toggle-btn is-active" data-days="7">7D</button>
+            <button type="button" class="usage-toggle-btn" data-days="14">14D</button>
+            <button type="button" class="usage-toggle-btn" data-days="30">30D</button>
+          </div>
         </div>
       </div>
       <div id="movementChart" class="movement-chart">

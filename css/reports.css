@@ -48,31 +48,6 @@
 }
 
 /* ── Product Usage Ranking ── */
-.usage-toggle {
-  display: flex;
-  gap: 4px;
-  background: var(--color-bg);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: 3px;
-}
-.usage-toggle-btn {
-  border: none;
-  background: transparent;
-  color: var(--color-text-muted);
-  font-family: var(--font-body);
-  font-size: 12px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background var(--transition), color var(--transition);
-}
-.usage-toggle-btn:hover { color: var(--color-text); }
-.usage-toggle-btn.is-active {
-  background: var(--color-primary);
-  color: #fff;
-}
 
 .usage-ranking {
   display: flex;

@@ -298,3 +298,76 @@ html, body {
 /* ── Misc ── */
 a { color: var(--color-primary); text-decoration: none; }
 a:hover { text-decoration: underline; }
+
+/* ── Shared segmented toggle (used by Reports usage ranking, Dashboard chart range) ── */
+.usage-toggle {
+  display: flex;
+  gap: 4px;
+  background: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+.usage-toggle-btn {
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted);
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.usage-toggle-btn:hover { color: var(--color-text); }
+.usage-toggle-btn.is-active {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+/* ── Chart tooltip (used by Dashboard Stock Movement chart) ── */
+.chart-tooltip {
+  position: fixed;
+  z-index: 2000;
+  pointer-events: none;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 10px 12px;
+  font-size: 12px;
+  color: var(--color-text);
+  opacity: 0;
+  transform: translateY(4px);
+  transition: opacity 0.12s ease, transform 0.12s ease;
+  min-width: 150px;
+}
+.chart-tooltip.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+.chart-tooltip-date {
+  font-weight: 700;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border);
+}
+.chart-tooltip-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 2px 0;
+}
+.chart-tooltip-row + .chart-tooltip-row { margin-top: 2px; }
+.chart-tooltip-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+}
+.chart-tooltip-value {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

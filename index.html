@@ -64,6 +64,15 @@
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+  <!-- EmailJS: sends YOU an alert when someone signs up -->
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+  <script src="js/notify-config.js"></script>
+  <script>
+    if (window.NOTIFY_CONFIG && window.NOTIFY_CONFIG.enabled && typeof emailjs !== 'undefined') {
+      emailjs.init(window.NOTIFY_CONFIG.publicKey);
+    }
+  </script>
+
   <script src="js/firebase-config.js"></script>
   <script src="js/auth.js"></script>
 

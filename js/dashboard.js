@@ -290,20 +290,64 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  // ── Stock Movement Chart: received vs issued, last 7 days, vanilla bars ──
+  // ── Stock Movement Chart: received vs issued, selectable range, custom tooltip ──
+  let movementDocs = [];   // cached so the range toggle can re-render without refetching
+  let movementRange = 7;   // days
+
+  const movementRangeToggle = document.getElementById('movementRangeToggle');
+  movementRangeToggle?.addEventListener('click', (e) => {
+    const btn = e.target.closest('.usage-toggle-btn');
+    if (!btn) return;
+    movementRange = Number(btn.dataset.days) || 7;
+    movementRangeToggle.querySelectorAll('.usage-toggle-btn').forEach(b =>
+      b.classList.toggle('is-active', b === btn));
+    renderMovementChart(movementDocs);
+  });
+
+  // Single floating tooltip element, reused for every bar.
+  let chartTooltipEl = document.getElementById('chartTooltip');
+  if (!chartTooltipEl) {
+    chartTooltipEl = document.createElement('div');
+    chartTooltipEl.id = 'chartTooltip';
+    chartTooltipEl.className = 'chart-tooltip';
+    document.body.appendChild(chartTooltipEl);
+  }
+
+  function showChartTooltip(evt, html) {
+    chartTooltipEl.innerHTML = html;
+    chartTooltipEl.classList.add('is-visible');
+    positionChartTooltip(evt);
+  }
+  function positionChartTooltip(evt) {
+    const pad = 14;
+    const rect = chartTooltipEl.getBoundingClientRect();
+    let x = evt.clientX + pad;
+    let y = evt.clientY + pad;
+    if (x + rect.width > window.innerWidth - 8)  x = evt.clientX - rect.width - pad;
+    if (y + rect.height > window.innerHeight - 8) y = evt.clientY - rect.height - pad;
+    chartTooltipEl.style.left = `${x}px`;
+    chartTooltipEl.style.top  = `${y}px`;
+  }
+  function hideChartTooltip() {
+    chartTooltipEl.classList.remove('is-visible');
+  }
+
   function renderMovementChart(docs) {
+    movementDocs = docs; // cache for range switches
     const container = document.getElementById('movementChart');
     const now = new Date();
     const days = [];
-    for (let i = 6; i >= 0; i--) {
+    for (let i = movementRange - 1; i >= 0; i--) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       d.setHours(0, 0, 0, 0);
       days.push(d);
     }
 
+    // Per-day totals AND per-day transaction lists (for the tooltip breakdown).
     const receivedByDay = days.map(() => 0);
     const issuedByDay   = days.map(() => 0);
+    const txByDay        = days.map(() => ({ received: [], issued: [] }));
 
     docs.forEach(t => {
       const dt = new Date(t.createdAt || 0);
@@ -313,34 +357,101 @@ document.addEventListener('DOMContentLoaded', async () => {
       });
       if (dayIndex === -1) return;
       const qty = (t.items || []).reduce((s, i) => s + (Number(i.qty) || 0), 0);
-      if (t.type === 'grn') receivedByDay[dayIndex] += qty;
-      else if (t.type === 'issue') issuedByDay[dayIndex] += qty;
+      if (t.type === 'grn') {
+        receivedByDay[dayIndex] += qty;
+        txByDay[dayIndex].received.push({ time: dt, qty, ref: t.grnNumber || '—' });
+      } else if (t.type === 'issue') {
+        issuedByDay[dayIndex] += qty;
+        txByDay[dayIndex].issued.push({ time: dt, qty, ref: t.issueNumber || '—' });
+      }
     });
 
     const maxVal = Math.max(1, ...receivedByDay, ...issuedByDay);
     const hasData = receivedByDay.some(v => v > 0) || issuedByDay.some(v => v > 0);
 
     if (!hasData) {
-      container.innerHTML = `<div class="chart-empty">No stock movement in the last 7 days.</div>`;
+      container.innerHTML = `<div class="chart-empty">No stock movement in the last ${movementRange} days.</div>`;
       return;
     }
+
+    // Full date/time for the tooltip header, e.g. "Thu, 2 Jul 2026"
+    const fullDateLabel = (d) => d.toLocaleDateString(undefined, {
+      weekday: 'short', day: 'numeric', month: 'short', year: 'numeric'
+    });
+    // Short time, e.g. "2:45 PM"
+    const timeLabel = (d) => d.toLocaleTimeString(undefined, {
+      hour: 'numeric', minute: '2-digit', second: '2-digit'
+    });
 
     const bars = days.map((d, i) => {
       const inH  = Math.round((receivedByDay[i] / maxVal) * 100);
       const outH = Math.round((issuedByDay[i] / maxVal) * 100);
-      return `<div class="chart-bar-group">
-        <div class="chart-bar chart-bar--in" style="height:${inH}%" title="Received: ${receivedByDay[i]}"></div>
-        <div class="chart-bar chart-bar--out" style="height:${outH}%" title="Issued: ${issuedByDay[i]}"></div>
+      return `<div class="chart-bar-group" data-tooltip-index="${i}">
+        <div class="chart-bar chart-bar--in" style="height:${inH}%"></div>
+        <div class="chart-bar chart-bar--out" style="height:${outH}%"></div>
       </div>`;
     }).join('');
 
-    const labels = days.map(d =>
-      `<span class="chart-x-label">${d.toLocaleDateString(undefined, { weekday: 'short' })}</span>`
-    ).join('');
+    // Tooltip HTML per bar index, built once up front.
+    const tooltipHtmlByIndex = days.map((d, i) =>
+      buildTooltipHtml(fullDateLabel(d), txByDay[i], receivedByDay[i], issuedByDay[i], timeLabel)
+    );
+
+    // X-axis: adapt label density/format to the selected range so it stays readable.
+    const labels = days.map(d => {
+      const label = movementRange <= 7
+        ? d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric' })   // "Thu 2"
+        : d.toLocaleDateString(undefined, { day: 'numeric', month: 'short' });    // "2 Jul"
+      return `<span class="chart-x-label">${label}</span>`;
+    }).join('');
 
     container.innerHTML = `
       <div class="chart-bars">${bars}</div>
       <div class="chart-x-axis">${labels}</div>
+    `;
+
+    // Event delegation: one set of listeners on the container handles every bar group.
+    const barsEl = container.querySelector('.chart-bars');
+    barsEl.addEventListener('mouseenter', (e) => {
+      const group = e.target.closest('.chart-bar-group');
+      if (!group) return;
+      const idx = Number(group.dataset.tooltipIndex);
+      showChartTooltip(e, tooltipHtmlByIndex[idx]);
+    }, true);
+    barsEl.addEventListener('mousemove', (e) => {
+      if (chartTooltipEl.classList.contains('is-visible')) positionChartTooltip(e);
+    });
+    barsEl.addEventListener('mouseleave', (e) => {
+      const group = e.target.closest('.chart-bar-group');
+      if (!group) return;
+      hideChartTooltip();
+    }, true);
+  }
+
+  /** Builds the HTML for one day's tooltip: date/time header + exact received/issued totals and entry counts. */
+  function buildTooltipHtml(dateStr, dayTx, receivedTotal, issuedTotal, timeLabel) {
+    const lastReceived = dayTx.received[dayTx.received.length - 1];
+    const lastIssued    = dayTx.issued[dayTx.issued.length - 1];
+
+    const receivedMeta = dayTx.received.length
+      ? `${dayTx.received.length} GRN${dayTx.received.length > 1 ? 's' : ''} · last at ${timeLabel(lastReceived.time)}`
+      : 'No GRNs';
+    const issuedMeta = dayTx.issued.length
+      ? `${dayTx.issued.length} Issue${dayTx.issued.length > 1 ? 's' : ''} · last at ${timeLabel(lastIssued.time)}`
+      : 'No issues';
+
+    return `
+      <div class="chart-tooltip-date">${esc(dateStr)}</div>
+      <div class="chart-tooltip-row">
+        <span class="chart-tooltip-label"><span class="chart-dot chart-dot--in"></span>Received</span>
+        <span class="chart-tooltip-value">+${receivedTotal.toLocaleString()}</span>
+      </div>
+      <div style="font-size:11px;color:var(--color-text-muted);margin:0 0 6px 15px;">${esc(receivedMeta)}</div>
+      <div class="chart-tooltip-row">
+        <span class="chart-tooltip-label"><span class="chart-dot chart-dot--out"></span>Issued</span>
+        <span class="chart-tooltip-value">−${issuedTotal.toLocaleString()}</span>
+      </div>
+      <div style="font-size:11px;color:var(--color-text-muted);margin:0 0 0 15px;">${esc(issuedMeta)}</div>
     `;
   }
 
@@ -358,6 +469,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       .filter(p => {
         const qty = Number(p.qty) || 0;
         const min = Number(p.minLevel) || 0;
+        // Always flag true zero/negative stock, even if no minLevel was ever
+        // configured for that product — being out of stock is critical
+        // regardless of whether a threshold was set.
+        if (qty <= 0) return true;
+        // Otherwise, only flag as "low" relative to a configured minLevel.
         return min > 0 && qty <= min;
       })
       .map(p => {
