@@ -5,6 +5,15 @@
  *          - Login           → index.html (loginForm)
  *          - Register        → register.html (registerForm)
  *          - Forgot password → index.html (forgotForm, inside a modal)
+ *          - Google sign-in  → index.html / register.html (googleSignInBtn)
+ *
+ * ACCOUNT LINKING:
+ *   If someone registered with email/password and later clicks
+ *   "Continue with Google" using that same email, Firebase throws
+ *   auth/account-exists-with-different-credential instead of letting
+ *   them in. We catch that, ask for their existing password, and link
+ *   the Google credential to that account (linkAccountModal) so both
+ *   sign-in methods work afterward.
  *
  * APPROVAL SYSTEM:
  *   New signups are created with approved:false in Firestore (/users/{uid}).
@@ -196,12 +205,16 @@ document.addEventListener('DOMContentLoaded', () => {
         const result = await auth.signInWithPopup(provider);
         await handlePostAuth(result.user, {
           fullName: result.user.displayName || '',
-          email: result.user.email || '',
-          phone: ''
-        }, /* emailKnown */ true, /* phoneKnown */ false);
+          email: result.user.email || ''
+        }, /* emailKnown */ true);
       } catch (err) {
         console.error('Google sign-in error:', err.code, err.message);
-        if (err.code !== 'auth/popup-closed-by-user') {
+        if (err.code === 'auth/account-exists-with-different-credential') {
+          // This email already has a password-based account. Instead of
+          // failing, ask for the password and link the Google credential
+          // to that existing account so future sign-ins can use either.
+          openLinkAccountModal(err);
+        } else if (err.code !== 'auth/popup-closed-by-user') {
           alert(friendlyError(err.code));
         }
       } finally {
@@ -210,71 +223,57 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // ── PHONE SIGN-IN / SIGN-UP ──────────────────────────────────────────────
-  const showPhoneBtn = document.getElementById('showPhoneLoginBtn');
-  const phoneForm     = document.getElementById('phoneForm');
-  const otpForm       = document.getElementById('otpForm');
-  let confirmationResult = null;
+  // ── LINK ACCOUNT (Google email already registered with a password) ──────
+  function openLinkAccountModal(err) {
+    const modal = document.getElementById('linkAccountModal');
+    if (!modal) return;
 
-  if (showPhoneBtn && phoneForm) {
-    showPhoneBtn.addEventListener('click', () => {
-      phoneForm.classList.toggle('hidden');
-    });
-  }
+    const email      = err.email || (err.customData && err.customData.email) || '';
+    const pendingCred = err.credential || null;
+    const msgBox          = document.getElementById('linkAccountMsg');
+    const passwordField   = document.getElementById('linkPassword');
+    const linkError       = document.getElementById('linkAccountError');
+    const linkCancel      = document.getElementById('linkAccountCancelBtn');
+    const form            = document.getElementById('linkAccountForm');
 
-  if (phoneForm) {
-    phoneForm.addEventListener('submit', async (e) => {
+    msgBox.textContent = email
+      ? `${email} is already registered with a password. Enter that password to link your Google account.`
+      : 'This email is already registered with a password. Enter that password to link your Google account.';
+    passwordField.value = '';
+    linkError.classList.add('hidden');
+    modal.classList.remove('hidden');
+
+    form.onsubmit = async (e) => {
       e.preventDefault();
-      const phoneNumber = document.getElementById('phoneNumber').value.trim();
-      const phoneError  = document.getElementById('phoneError');
-      const btn = document.getElementById('sendCodeBtn');
-      phoneError.classList.add('hidden');
-      setLoading(btn, true, 'Sending…');
+      const password = passwordField.value;
+      const btn = document.getElementById('linkAccountSubmitBtn');
+      setLoading(btn, true, 'Linking…');
+      linkError.classList.add('hidden');
       try {
-        if (!window.recaptchaVerifier) {
-          window.recaptchaVerifier = new firebase.auth.RecaptchaVerifier('recaptcha-container', { size: 'invisible' }, auth);
+        const credential = await auth.signInWithEmailAndPassword(email, password);
+        if (pendingCred) {
+          await credential.user.linkWithCredential(pendingCred);
         }
-        confirmationResult = await auth.signInWithPhoneNumber(phoneNumber, window.recaptchaVerifier);
-        phoneForm.classList.add('hidden');
-        otpForm.classList.remove('hidden');
-      } catch (err) {
-        console.error('Phone sign-in error:', err.code, err.message);
-        showFormError(phoneError, friendlyError(err.code) || 'Could not send code. Check the number and try again.');
-        if (window.recaptchaVerifier) {
-          window.recaptchaVerifier.render().then((id) => grecaptcha.reset(id)).catch(() => {});
-        }
+        modal.classList.add('hidden');
+        await handlePostAuth(credential.user, {
+          fullName: credential.user.displayName || '',
+          email: credential.user.email || ''
+        }, /* emailKnown */ true);
+      } catch (linkErr) {
+        console.error('Account link error:', linkErr.code, linkErr.message);
+        showFormError(linkError, friendlyError(linkErr.code));
       } finally {
-        setLoading(btn, false, 'Send Code');
+        setLoading(btn, false, 'Link & Sign In');
       }
-    });
+    };
+
+    if (linkCancel) {
+      linkCancel.onclick = () => modal.classList.add('hidden');
+    }
   }
 
-  if (otpForm) {
-    otpForm.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const code = document.getElementById('otpCode').value.trim();
-      const otpError = document.getElementById('otpError');
-      const btn = document.getElementById('verifyCodeBtn');
-      otpError.classList.add('hidden');
-      setLoading(btn, true, 'Verifying…');
-      try {
-        const cred = await confirmationResult.confirm(code);
-        await handlePostAuth(cred.user, {
-          fullName: '',
-          email: '',
-          phone: cred.user.phoneNumber || ''
-        }, /* emailKnown */ false, /* phoneKnown */ true);
-      } catch (err) {
-        console.error('OTP verify error:', err.code, err.message);
-        showFormError(otpError, 'Invalid code. Please try again.');
-      } finally {
-        setLoading(btn, false, 'Verify Code');
-      }
-    });
-  }
-
-  // ── Route new vs. returning users after Google/Phone auth ───────────────
-  async function handlePostAuth(user, prefill, emailKnown, phoneKnown) {
+  // ── Route new vs. returning users after Google auth ──────────────────────
+  async function handlePostAuth(user, prefill, emailKnown) {
     if (!db) { window.location.href = 'pages/dashboard.html'; return; }
 
     const doc = await db.collection('users').doc(user.uid).get();
@@ -289,25 +288,22 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Brand-new account → ask for their details before submitting for approval
-    openCompleteProfile(user, prefill, emailKnown, phoneKnown);
+    // Brand-new account → ask for their name before submitting for approval
+    openCompleteProfile(user, prefill, emailKnown);
   }
 
-  function openCompleteProfile(user, prefill, emailKnown, phoneKnown) {
+  function openCompleteProfile(user, prefill, emailKnown) {
     const modal = document.getElementById('completeProfileModal');
     if (!modal) { finishSignup(user, prefill); return; }
 
     const nameField  = document.getElementById('cpFullName');
     const emailField = document.getElementById('cpEmail');
-    const phoneField = document.getElementById('cpPhone');
     const cpError    = document.getElementById('cpError');
     const cpCancel   = document.getElementById('cpCancelBtn');
 
     nameField.value     = prefill.fullName || '';
     emailField.value    = prefill.email || '';
-    phoneField.value    = prefill.phone || '';
     emailField.disabled = emailKnown;
-    phoneField.disabled = phoneKnown;
     cpError.classList.add('hidden');
 
     modal.classList.remove('hidden');
@@ -317,15 +313,14 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       const fullName = nameField.value.trim();
       const email    = emailField.value.trim();
-      const phone    = phoneField.value.trim();
 
       if (!fullName) { showFormError(cpError, 'Please enter your full name.'); return; }
-      if (!email && !phone) { showFormError(cpError, 'Please provide an email or phone number.'); return; }
+      if (!email) { showFormError(cpError, 'Please provide an email address.'); return; }
 
       const btn = document.getElementById('cpSubmitBtn');
       setLoading(btn, true, 'Submitting…');
       try {
-        await finishSignup(user, { fullName, email, phone });
+        await finishSignup(user, { fullName, email });
         modal.classList.add('hidden');
       } catch (err) {
         console.error('Profile completion error:', err);
@@ -342,7 +337,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  async function finishSignup(user, { fullName, email, phone }) {
+  async function finishSignup(user, { fullName, email }) {
     if (fullName) {
       try { await user.updateProfile({ displayName: fullName }); } catch (_) {}
     }
@@ -350,14 +345,13 @@ document.addEventListener('DOMContentLoaded', () => {
     await db.collection('users').doc(user.uid).set({
       displayName: fullName || user.displayName || '',
       email:       email || user.email || '',
-      phone:       phone || user.phoneNumber || '',
       role:        'staff',
       approved:    false,
       status:      'pending',
       createdAt:   firebase.firestore.FieldValue.serverTimestamp()
     });
 
-    notifyAdminOfNewSignup(fullName || user.displayName || 'New user', email || user.email || phone || user.phoneNumber || '');
+    notifyAdminOfNewSignup(fullName || user.displayName || 'New user', email || user.email || '');
 
     await auth.signOut();
     window.location.href = 'index.html?pending=1';

@@ -40,38 +40,13 @@
       <img src="https://www.gstatic.com/images/branding/product/1x/gsa_512dp.png" alt="" width="18" height="18" />
       Continue with Google
     </button>
-    <button type="button" id="showPhoneLoginBtn" class="btn-ghost btn-social">
-     &#9990;   Continue with phone
-    </button>
-
-    <!-- Phone number step -->
-    <form id="phoneForm" class="login-form hidden" style="margin-top:14px">
-      <div class="field-group">
-        <label for="phoneNumber">Phone number</label>
-        <input type="tel" id="phoneNumber" placeholder="+2348012345678" required autocomplete="tel" />
-      </div>
-      <div id="phoneError" class="error-msg hidden"></div>
-      <button type="submit" class="btn-primary" id="sendCodeBtn">Send Code</button>
-    </form>
-
-    <!-- OTP step -->
-    <form id="otpForm" class="login-form hidden" style="margin-top:14px">
-      <div class="field-group">
-        <label for="otpCode">Enter the 6-digit code</label>
-        <input type="text" id="otpCode" inputmode="numeric" placeholder="123456" required autocomplete="one-time-code" />
-      </div>
-      <div id="otpError" class="error-msg hidden"></div>
-      <button type="submit" class="btn-primary" id="verifyCodeBtn">Verify Code</button>
-    </form>
-
-    <div id="recaptcha-container"></div>
 
     <p class="auth-switch">
       Don't have an account? <a href="register.html">Create one</a>
     </p>
   </div>
 
-  <!-- Complete Profile Modal (shown to brand-new Google/Phone sign-ups) -->
+  <!-- Complete Profile Modal (shown to brand-new Google sign-ups) -->
   <div class="modal hidden" id="completeProfileModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -86,14 +61,31 @@
           <label for="cpEmail">Email</label>
           <input type="email" id="cpEmail" autocomplete="email" />
         </div>
-        <div class="field-group">
-          <label for="cpPhone">Phone number</label>
-          <input type="tel" id="cpPhone" placeholder="+2348012345678" autocomplete="tel" />
-        </div>
         <div id="cpError" class="error-msg hidden"></div>
         <div class="modal-actions">
           <button type="button" class="btn-ghost" id="cpCancelBtn">Cancel</button>
           <button type="submit" class="btn-primary" id="cpSubmitBtn">Finish & Submit for Approval</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Link Account Modal (shown when a Google sign-in matches an existing email/password account) -->
+  <div class="modal hidden" id="linkAccountModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <h3>This email already has an account</h3>
+      </div>
+      <p style="margin:0 0 14px;color:var(--text-muted,#666);font-size:14px" id="linkAccountMsg"></p>
+      <form id="linkAccountForm" class="modal-form">
+        <div class="field-group">
+          <label for="linkPassword">Enter your password to link Google sign-in</label>
+          <input type="password" id="linkPassword" placeholder="••••••••" required autocomplete="current-password" />
+        </div>
+        <div id="linkAccountError" class="error-msg hidden"></div>
+        <div class="modal-actions">
+          <button type="button" class="btn-ghost" id="linkAccountCancelBtn">Cancel</button>
+          <button type="submit" class="btn-primary" id="linkAccountSubmitBtn">Link & Sign In</button>
         </div>
       </form>
     </div>
