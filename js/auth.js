@@ -251,13 +251,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('linkAccountModal');
     if (!modal) return;
 
-    const email      = err.email || (err.customData && err.customData.email) || '';
-    const pendingCred = err.credential || null;
+    // Different SDK builds surface these differently — try every known shape.
+    const email = err.email
+      || (err.customData && err.customData.email)
+      || '';
+
+    let pendingCred = err.credential || null;
+    if (!pendingCred && firebase.auth.GoogleAuthProvider.credentialFromError) {
+      try { pendingCred = firebase.auth.GoogleAuthProvider.credentialFromError(err); } catch (_) {}
+    }
+
+    console.log('[link-account] email:', email, '| got credential:', !!pendingCred);
+
     const msgBox          = document.getElementById('linkAccountMsg');
-    const passwordField   = document.getElementById('linkPassword');
-    const linkError       = document.getElementById('linkAccountError');
-    const linkCancel      = document.getElementById('linkAccountCancelBtn');
-    const form            = document.getElementById('linkAccountForm');
+    const emailGroup       = document.getElementById('linkEmailGroup');
+    const emailField       = document.getElementById('linkEmail');
+    const passwordField    = document.getElementById('linkPassword');
+    const linkError        = document.getElementById('linkAccountError');
+    const linkCancel       = document.getElementById('linkAccountCancelBtn');
+    const form             = document.getElementById('linkAccountForm');
+
+    if (email) {
+      emailField.value = email;
+      emailGroup.classList.add('hidden');
+    } else {
+      emailField.value = '';
+      emailGroup.classList.remove('hidden');
+    }
 
     msgBox.textContent = email
       ? `${email} is already registered with a password. Enter that password to link your Google account.`
@@ -268,17 +288,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     form.onsubmit = async (e) => {
       e.preventDefault();
+      const submittedEmail = emailField.value.trim();
       const password = passwordField.value;
+
+      if (!submittedEmail) { showFormError(linkError, 'Please enter your email address.'); return; }
+
       const btn = document.getElementById('linkAccountSubmitBtn');
       setLoading(btn, true, 'Linking…');
       linkError.classList.add('hidden');
       try {
-        const credential = await auth.signInWithEmailAndPassword(email, password);
+        const credential = await auth.signInWithEmailAndPassword(submittedEmail, password);
         if (pendingCred) {
-          try { await credential.user.linkWithCredential(pendingCred); } catch (linkWarn) {
+          try {
+            await credential.user.linkWithCredential(pendingCred);
+            console.log('[link-account] Google credential linked successfully.');
+          } catch (linkWarn) {
             // Already linked (e.g. retried after a previous success) — not fatal.
-            console.warn('Link warning:', linkWarn.code, linkWarn.message);
+            console.warn('[link-account] link warning:', linkWarn.code, linkWarn.message);
           }
+        } else {
+          console.warn('[link-account] No Google credential was captured, so Google was NOT linked. You are signed in with your password only — try Continue with Google again next time.');
         }
         modal.classList.add('hidden');
         await handlePostAuth(credential.user, {
