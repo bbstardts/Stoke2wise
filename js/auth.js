@@ -188,7 +188,20 @@ document.addEventListener('DOMContentLoaded', () => {
         }
       } catch (err) {
         console.error('Register error:', err.code, err.message);
-        showFormError(errorBox, friendlyError(err.code));
+        if (err.code === 'auth/email-already-in-use') {
+          try {
+            const methods = await auth.fetchSignInMethodsForEmail(email);
+            if (methods.includes('google.com') && !methods.includes('password')) {
+              showFormError(errorBox, 'An account with this email already exists, signed up with Google. Please use "Continue with Google" below to sign in.');
+            } else {
+              showFormError(errorBox, 'An account with this email already exists. Please sign in instead, or use "Forgot password?" if you don\'t remember your password.');
+            }
+          } catch (_) {
+            showFormError(errorBox, friendlyError(err.code));
+          }
+        } else {
+          showFormError(errorBox, friendlyError(err.code));
+        }
       } finally {
         setLoading(registerBtn, false, 'Create Account');
       }
