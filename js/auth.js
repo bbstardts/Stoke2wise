@@ -203,10 +203,33 @@ document.addEventListener('DOMContentLoaded', () => {
       googleBtn.disabled = true;
       try {
         const result = await auth.signInWithPopup(provider);
-        await handlePostAuth(result.user, {
-          fullName: result.user.displayName || '',
-          email: result.user.email || ''
-        }, /* emailKnown */ true);
+        const user   = result.user;
+        const email  = user.email || '';
+
+        // Firebase may silently create a brand-new auth user for this
+        // Google sign-in even though an email/password account with the
+        // same email already exists (this happens whenever "One account
+        // per email address" isn't enforced in the Firebase console).
+        // Check Firestore ourselves for a pre-existing account with this
+        // email so we don't end up with two separate accounts.
+        if (db && email) {
+          const existing = await db.collection('users')
+            .where('email', '==', email)
+            .limit(1)
+            .get();
+
+          if (!existing.empty && existing.docs[0].id !== user.uid) {
+            const pendingCred = result.credential || null;
+            // This Google sign-in just minted a fresh, empty auth user —
+            // discard it, then ask for the existing account's password
+            // and link Google to that account instead.
+            try { await user.delete(); } catch (_) { try { await auth.signOut(); } catch (_) {} }
+            openLinkAccountModal({ email, credential: pendingCred });
+            return;
+          }
+        }
+
+        await handlePostAuth(user, { fullName: user.displayName || '', email }, /* emailKnown */ true);
       } catch (err) {
         console.error('Google sign-in error:', err.code, err.message);
         if (err.code === 'auth/account-exists-with-different-credential') {
@@ -252,7 +275,10 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const credential = await auth.signInWithEmailAndPassword(email, password);
         if (pendingCred) {
-          await credential.user.linkWithCredential(pendingCred);
+          try { await credential.user.linkWithCredential(pendingCred); } catch (linkWarn) {
+            // Already linked (e.g. retried after a previous success) — not fatal.
+            console.warn('Link warning:', linkWarn.code, linkWarn.message);
+          }
         }
         modal.classList.add('hidden');
         await handlePostAuth(credential.user, {
@@ -289,21 +315,19 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Brand-new account → ask for their name before submitting for approval
-    openCompleteProfile(user, prefill, emailKnown);
+    openCompleteProfile(user, prefill);
   }
 
-  function openCompleteProfile(user, prefill, emailKnown) {
+  function openCompleteProfile(user, prefill) {
     const modal = document.getElementById('completeProfileModal');
     if (!modal) { finishSignup(user, prefill); return; }
 
     const nameField  = document.getElementById('cpFullName');
-    const emailField = document.getElementById('cpEmail');
     const cpError    = document.getElementById('cpError');
     const cpCancel   = document.getElementById('cpCancelBtn');
+    const email      = prefill.email || '';
 
-    nameField.value     = prefill.fullName || '';
-    emailField.value    = prefill.email || '';
-    emailField.disabled = emailKnown;
+    nameField.value  = prefill.fullName || '';
     cpError.classList.add('hidden');
 
     modal.classList.remove('hidden');
@@ -312,10 +336,8 @@ document.addEventListener('DOMContentLoaded', () => {
     form.onsubmit = async (e) => {
       e.preventDefault();
       const fullName = nameField.value.trim();
-      const email    = emailField.value.trim();
 
       if (!fullName) { showFormError(cpError, 'Please enter your full name.'); return; }
-      if (!email) { showFormError(cpError, 'Please provide an email address.'); return; }
 
       const btn = document.getElementById('cpSubmitBtn');
       setLoading(btn, true, 'Submitting…');
