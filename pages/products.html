@@ -7,6 +7,8 @@
   <title>StockWise — Products</title>
   <link rel="stylesheet" href="../css/global.css" />
   <link rel="stylesheet" href="../css/layout.css" />
+  <link rel="stylesheet" href="../css/forms.css" />
+  <link rel="stylesheet" href="../css/history.css" />
   <link rel="stylesheet" href="../css/products.css" />
 </head>
 <body>
@@ -69,6 +71,31 @@
       </table>
       <p id="emptyState" class="empty-state hidden">No products found. Click <strong>+ Add Product</strong> to get started.</p>
     </div>
+
+    <!-- Recent Product Changes -->
+    <div class="form-card" style="margin-top:24px">
+    <section class="section-block">
+      <div class="section-header-row">
+        <h3 class="section-title">Recent Product Changes</h3>
+      </div>
+      <div class="table-scroll-wrap" style="max-height:400px;overflow-y:auto;">
+        <table class="data-table history-table" id="recentProductChangesTable">
+          <thead>
+            <tr>
+              <th>Date / Time</th>
+              <th>Category</th>
+              <th>Product</th>
+              <th>Change</th>
+              <th>Changed By</th>
+            </tr>
+          </thead>
+          <tbody id="recentProductChangesBody">
+            <tr><td colspan="5" class="table-loading">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+    </div>
   </main>
 
   <!-- ── Add / Edit Modal ── -->
@@ -85,12 +112,17 @@
         <div class="field-row">
           <div class="field-group">
             <label>Category *</label>
-            <input type="text" id="category" required placeholder="e.g. Tractor, Food, Chemicals" list="categoryList" />
-            <datalist id="categoryList"></datalist>
+            <select id="category" required>
+              <option value="">— Select category —</option>
+              <option value="__new__">➕ Add new category…</option>
+            </select>
+            <input type="text" id="categoryNew" placeholder="Type new category name" class="hidden" style="margin-top:8px" />
+            <span class="field-hint">Pick an existing category from the list, or choose "Add new category" to type one — it becomes selectable immediately in Products, Issue, and GRN.</span>
           </div>
           <div class="field-group">
             <label>Product Name *</label>
             <input type="text" id="productName" required placeholder="e.g. Engine Oil 5W-30" />
+            <span class="field-hint">Product not in the warehouse yet? Just fill this in — saving here adds it as a brand-new product.</span>
           </div>
         </div>
 

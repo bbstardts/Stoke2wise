@@ -58,12 +58,24 @@ async function loadProducts() {
   try {
     const snap = await db().collection('products').orderBy('name').get();
     productList = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const cats = [...new Set(productList.map(p => p.category || 'Uncategorised'))].sort();
-    categoryList = cats;
+    categoryList = getDistinctCategoriesGRN(productList);
   } catch (err) {
     console.error('Could not load products:', err);
     productList = []; categoryList = [];
   }
+}
+
+// De-duplicates categories by case/whitespace, same normalization as
+// products.js's getDistinctCategories(), so legacy data with mixed casing
+// (e.g. "Tractor" and "tractor ") doesn't show as two dropdown entries here.
+function getDistinctCategoriesGRN(products) {
+  const seen = new Map(); // lowercase-trimmed key -> display value (first seen wins)
+  products.forEach(p => {
+    const raw = (p.category || 'Uncategorised').trim() || 'Uncategorised';
+    const key = raw.toLowerCase();
+    if (!seen.has(key)) seen.set(key, raw);
+  });
+  return [...seen.values()].sort((a, b) => a.localeCompare(b));
 }
 
 /* ─── Add line item ─────────────────────────────────────────────────────── */
@@ -213,8 +225,10 @@ function handleCategorySelect(id) {
   // Reset product & stock, keep description (user may have typed something)
   setStock(id, '—');
 
+  // Compare case/whitespace-insensitively so the normalized dropdown value
+  // (e.g. "Tractor") still matches raw product docs stored as "tractor " etc.
   const filtered = selectedCat
-    ? productList.filter(p => (p.category || 'Uncategorised') === selectedCat)
+    ? productList.filter(p => (p.category || 'Uncategorised').trim().toLowerCase() === selectedCat.toLowerCase())
     : [];
 
   const placeholder = selectedCat

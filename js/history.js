@@ -156,7 +156,11 @@ function getFiltered() {
 }
 
 function buildPrintMeta() {
-  const actionLabel = { all:'All Transactions', Received:'Received (GRN)', Issued:'Issued', 'Stock Out':'Stock Out' }[filterAction] || 'All';
+  const actionLabel = {
+    all:'All Transactions', Received:'Received (GRN)', Issued:'Issued', 'Stock Out':'Stock Out',
+    'Product Added':'Product Added', 'Product Updated':'Product Updated', 'Product Removed':'Product Removed',
+    'Price Set':'Price Set', 'Price Updated':'Price Updated', 'Price Removed':'Price Removed',
+  }[filterAction] || filterAction || 'All';
   const rangeLabel  = { all:'All Dates', today:'Today', week:'This Week', month:'This Month', year:'This Year',
     custom: (() => {
       const f = document.getElementById('dateFrom').value;
