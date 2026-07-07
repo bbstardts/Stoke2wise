@@ -166,6 +166,13 @@ function addLineItemRow() {
   if (dDesc) dDesc.addEventListener('input', () => syncDesc(id, 'desktop'));
 
   updateRemoveButtonsState();
+
+  // Make category + product pickers searchable (type to filter, contained
+  // scrollable list) instead of a plain long native <select>.
+  makeSearchable(document.getElementById(`catSel_${id}`));
+  makeSearchable(document.getElementById(`mCatSel_${id}`));
+  makeSearchable(document.getElementById(`prodSel_${id}`));
+  makeSearchable(document.getElementById(`mProdSel_${id}`));
 }
 
 /* ─── Remove-button enable/disable ──────────────────────────────────────── */
@@ -200,10 +207,17 @@ function removeLineItem(id) {
 }
 
 function clearLineItem(id) {
-  ['catSel_','mCatSel_'].forEach(p => { const el = document.getElementById(`${p}${id}`); if (el) el.value = ''; });
+  ['catSel_','mCatSel_'].forEach(p => {
+    const el = document.getElementById(`${p}${id}`);
+    if (el) { el.value = ''; refreshSearchableOptions(el); }
+  });
   ['prodSel_','mProdSel_'].forEach(p => {
     const el = document.getElementById(`${p}${id}`);
-    if (el) { el.innerHTML = '<option value="">— Select category first —</option>'; el.disabled = true; }
+    if (el) {
+      el.innerHTML = '<option value="">— Select category first —</option>';
+      el.disabled = true;
+      refreshSearchableOptions(el);
+    }
   });
   ['desc_','mDesc_'].forEach(p => {
     const el = document.getElementById(`${p}${id}`);
@@ -246,6 +260,8 @@ function handleCategorySelect(id) {
   const mProd = document.getElementById(`mProdSel_${id}`);
   if (dProd) { dProd.innerHTML = opts; dProd.disabled = !filtered.length; }
   if (mProd) { mProd.innerHTML = opts; mProd.disabled = !filtered.length; }
+  refreshSearchableOptions(dProd);
+  refreshSearchableOptions(mProd);
 }
 
 /* ─── Product select ────────────────────────────────────────────────────── */

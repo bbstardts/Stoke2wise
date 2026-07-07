@@ -96,6 +96,70 @@
   cursor: not-allowed;
 }
 
+/* Searchable select combobox (wraps a real <select> for category/product pickers) */
+.searchable-select {
+  position: relative;
+  width: 100%;
+}
+.searchable-select__native {
+  /* keep in DOM (for existing onchange/.value logic) but visually hidden */
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  height: 0;
+  width: 0;
+  border: none;
+  padding: 0;
+}
+.searchable-select__input {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  min-width: 0;
+}
+.searchable-select__input:focus { border-color: var(--color-primary); }
+.searchable-select__input:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+.searchable-select__list {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 220px;
+  overflow-y: auto;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+}
+.searchable-select__list.hidden { display: none; }
+.searchable-select__option {
+  padding: 7px 10px;
+  font-size: 13px;
+  color: var(--color-text);
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.searchable-select__option:hover,
+.searchable-select__option.is-selected { background: var(--color-surface-2); }
+.searchable-select__option.is-placeholder { color: var(--color-text-muted); }
+.searchable-select__empty {
+  padding: 8px 10px;
+  font-size: 12px;
+  color: var(--color-text-muted);
+}
+
 /* Qty input */
 .line-item-qty {
   width: 100%;

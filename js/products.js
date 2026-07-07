@@ -173,6 +173,7 @@ function handleCategorySelectChange() {
   newInput.classList.toggle('hidden', !isNew);
   newInput.required = isNew;
   if (isNew) newInput.focus();
+  refreshSearchableOptions(select);
 }
 
 function getSelectedCategory() {
@@ -203,6 +204,7 @@ function setSelectedCategory(value) {
     newInput.classList.add('hidden');
     newInput.required = false;
   }
+  refreshSearchableOptions(select);
 }
 
 // ── Form ──────────────────────────────────────────────────────────────────────
@@ -242,6 +244,7 @@ function openModal(productId) {
   document.getElementById('categoryNew').value = '';
   document.getElementById('categoryNew').classList.add('hidden');
   document.getElementById('categoryNew').required = false;
+  refreshSearchableOptions(document.getElementById('category'));
   hideFormError();
 
   if (productId) {
@@ -346,9 +349,13 @@ function populateCategoryFilter(products) {
     cats.map(c => `<option value="${escHtml(c)}">${escHtml(c)}</option>`).join('') +
     '<option value="__new__">➕ Add new category…</option>';
   if (cats.includes(prevSelected)) categorySelect.value = prevSelected;
+  makeSearchable(categorySelect);
+  refreshSearchableOptions(categorySelect);
 
   categoryFilter.innerHTML = '<option value="">All Categories</option>' +
     cats.map(c => `<option value="${escHtml(c)}" ${c === current ? 'selected' : ''}>${escHtml(c)}</option>`).join('');
+  makeSearchable(categoryFilter);
+  refreshSearchableOptions(categoryFilter);
 }
 
 // Returns the distinct set of categories currently in use, de-duplicated by
