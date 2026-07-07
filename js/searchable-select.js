@@ -87,6 +87,7 @@ function makeSearchable(selectEl) {
       list.appendChild(empty);
     }
   }
+  selectEl._searchableBuildList = buildList;
 
   function openList() {
     if (selectEl.disabled) return;
@@ -145,7 +146,12 @@ function refreshSearchableOptions(selectEl) {
   const opt = selectEl.selectedOptions[0];
   selectEl._searchableInput.value = (opt && opt.value) ? opt.textContent.trim() : '';
   selectEl._searchableInput.placeholder = (opt && !opt.value) ? opt.textContent.trim() : 'Search…';
-  if (!selectEl._searchableList.classList.contains('hidden')) {
-    selectEl._searchableList.innerHTML = '';
+  // Rebuild the visible dropdown list from the select's current <option>s.
+  // Previously this only cleared the list when open and never repopulated
+  // it, so newly loaded products (e.g. after picking a category) never
+  // appeared in the searchable dropdown even though the underlying
+  // <select> had them.
+  if (selectEl._searchableBuildList) {
+    selectEl._searchableBuildList('');
   }
 }

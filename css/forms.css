@@ -194,7 +194,7 @@
 .desc-input::placeholder { color: var(--color-text-muted); }
 .desc-input:focus {
   border-color: var(--color-primary);
-  box-shadow: 0 0 0 3px rgba(37,99,235,0.10);
+  box-shadow: 0 0 0 3px rgba(21,128,61,0.10);
 }
 
 /* Info chips (description, available, in-stock) */

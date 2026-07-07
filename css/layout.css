@@ -84,7 +84,7 @@ body {
   text-decoration: none;
 }
 .sidebar-nav li a.active {
-  background: #EFF6FF;
+  background: #F0FDF4;
   color: var(--color-primary);
   font-weight: 600;
 }

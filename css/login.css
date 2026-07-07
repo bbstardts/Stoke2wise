@@ -19,7 +19,7 @@
   justify-content: center;
   min-height: 100vh;
   background:
-    radial-gradient(ellipse at 60% 0%, rgba(37,99,235,0.08) 0%, transparent 60%),
+    radial-gradient(ellipse at 60% 0%, rgba(21,128,61,0.08) 0%, transparent 60%),
     var(--color-bg);
 }
 

@@ -359,7 +359,7 @@ function renderMonthSummary() {
   });
   const cats = Object.keys(byCat).sort((a, b) => byCat[b] - byCat[a]);
   byCatWrap.innerHTML = cats.length
-    ? cats.map(c => `<span class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-right:8px">${escExp(c)}: ${fmtCurrency(byCat[c])}</span>`).join('')
+    ? cats.map(c => `<span class="totals-chip" style="background:rgba(21,128,61,0.08);color:var(--color-primary);margin-right:8px">${escExp(c)}: ${fmtCurrency(byCat[c])}</span>`).join('')
     : `<span style="color:var(--color-text-muted);font-size:13px">No expenses this month.</span>`;
 }
 

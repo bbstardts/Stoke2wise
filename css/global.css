@@ -34,8 +34,10 @@
   --color-text:         #374151;
   --color-text-muted:   #6B7280;
 
-  --color-primary:      #2563EB;
-  --color-primary-dark: #1D4ED8;
+  --color-primary:      #15803D;
+  --color-primary-dark: #14532D;
+  --color-accent:       #EAB308;
+  --color-accent-dark:  #A16207;
   --color-success:      #16A34A;
   --color-warning:      #D97706;
   --color-danger:       #DC2626;

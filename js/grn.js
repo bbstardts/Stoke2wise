@@ -471,7 +471,7 @@ function renderGrnRows(grns) {
 
     const docChip = grn.documentUrl
       ? `<a href="${escHtml(grn.documentUrl)}" target="_blank" rel="noopener"
-            class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-left:8px;text-decoration:none"
+            class="totals-chip" style="background:rgba(255,255,255,0.18);color:#fff;margin-left:8px;text-decoration:underline"
             title="Open attached document">📎 ${escHtml(grn.documentLabel || 'Document')}</a>`
       : '';
 

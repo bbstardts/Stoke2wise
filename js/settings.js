@@ -223,7 +223,7 @@ async function loadUsers() {
       const isPending  = u.status === 'pending' || u.approved === false;
       const isInviteOnly = u.status === 'invited'; // placeholder row, no real account yet
       const statusPill = isInviteOnly
-        ? `<span class="status-pill" style="background:rgba(37,99,235,0.1);color:var(--color-primary)">Invited</span>`
+        ? `<span class="status-pill" style="background:rgba(21,128,61,0.1);color:var(--color-primary)">Invited</span>`
         : isPending
           ? `<span class="status-pill status-pill--pending">Pending</span>`
           : `<span class="status-pill status-pill--active">Active</span>`;

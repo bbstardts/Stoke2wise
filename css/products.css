@@ -83,7 +83,7 @@
   border-radius: 20px;
   font-size: 11px;
   font-weight: 600;
-  background: rgba(37,99,235,0.08);
+  background: rgba(21,128,61,0.08);
   color: var(--color-primary);
 }
 
@@ -132,7 +132,7 @@
 .image-upload-area:hover,
 .image-upload-area.drag-over {
   border-color: var(--color-primary);
-  background: rgba(37,99,235,0.03);
+  background: rgba(21,128,61,0.03);
 }
 
 .upload-placeholder {

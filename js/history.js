@@ -240,13 +240,13 @@ function renderTable() {
       const qtyDisplay = d.qtyChanged != null ? fmtNum(d.qtyChanged) : '—';
       const stockAfterDisplay = d.stockAfter != null ? fmtNum(d.stockAfter) : '—';
       const tag = d.department
-        ? `<span class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-right:6px">${escapeHtml(d.department)}</span>`
+        ? `<span class="totals-chip" style="background:rgba(21,128,61,0.08);color:var(--color-primary);margin-right:6px">${escapeHtml(d.department)}</span>`
         : (d.supplierName
             ? `<span class="totals-chip" style="background:rgba(22,163,74,0.08);color:var(--color-success);margin-right:6px">${escapeHtml(d.supplierName)}</span>`
             : '');
       const docLink = d.documentUrl
         ? `<a href="${escapeHtml(d.documentUrl)}" target="_blank" rel="noopener"
-              class="totals-chip" style="background:rgba(37,99,235,0.08);color:var(--color-primary);margin-right:6px;text-decoration:none"
+              class="totals-chip" style="background:rgba(21,128,61,0.08);color:var(--color-primary);margin-right:6px;text-decoration:none"
               title="Open attached document">📎 ${escapeHtml(d.documentLabel || 'Document')}</a>`
         : '';
 
@@ -257,7 +257,7 @@ function renderTable() {
         <td><span class="tx-badge ${badgeClass}">${escapeHtml(action)}</span></td>
         <td class="num-cell">${qtyDisplay}</td>
         <td class="num-cell">${stockAfterDisplay}</td>
-        <td class="td-desc" title="${escapeHtml(desc)}">${tag}${docLink}${escapeHtml(desc.length > 50 ? desc.slice(0,50)+'…' : desc)}</td>
+        <td class="td-desc" title="${escapeHtml(desc)}">${tag}${docLink}${escapeHtml(desc)}</td>
       </tr>`;
     }).join('');
 

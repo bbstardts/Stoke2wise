@@ -42,7 +42,7 @@
   justify-content: center;
   margin-bottom: 4px;
 }
-.kpi-icon--blue  { background: rgba(37,99,235,0.1);  color: var(--color-primary); }
+.kpi-icon--blue  { background: rgba(21,128,61,0.1);  color: var(--color-primary); }
 .kpi-icon--green { background: rgba(22,163,74,0.1);  color: var(--color-success); }
 .kpi-icon--amber { background: rgba(217,119,6,0.1);  color: var(--color-warning); }
 .kpi-icon--red   { background: rgba(220,38,38,0.1);  color: var(--color-danger);  }
@@ -198,7 +198,7 @@
 }
 
 .badge--info {
-  background: rgba(37,99,235,0.1);
+  background: rgba(21,128,61,0.1);
   color: var(--color-primary);
 }
 

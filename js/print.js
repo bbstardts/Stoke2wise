@@ -150,7 +150,7 @@ const RECEIPT_STYLES = `
   .doc-number {
     font-size: 13pt;
     font-weight: 600;
-    color: #2563eb;
+    color: #15803D;
     margin-top: 4px;
   }
   .doc-status {
@@ -594,9 +594,9 @@ window.printProductReport = function(products, opts = {}) {
     }
     .rpt-filter-tag {
       display: inline-block;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
-      color: #1d4ed8;
+      background: #F0FDF4;
+      border: 1px solid #BBF7D0;
+      color: #14532D;
       padding: 1px 10px;
       border-radius: 12px;
       font-size: 9pt;
@@ -828,7 +828,7 @@ window.printRecentTransactionsReport = function(records, opts = {}) {
           <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f7f8fa'}">
             <td class="c-cat">${escH(it.category || '\u2014')}</td>
             <td class="c-prod" colspan="2">${escH(it.productName || '\u2014')}</td>
-            <td class="c-desc">${escH((it.description || '\u2014').slice(0, 70))}</td>
+            <td class="c-desc">${escH(it.description || '\u2014')}</td>
             <td class="c-num">${it.qty != null ? it.qty.toLocaleString() : '\u2014'}</td>
           </tr>`).join('')
           : `<tr><td colspan="5" style="color:#888">No line items recorded.</td></tr>`;
@@ -863,25 +863,25 @@ window.printRecentTransactionsReport = function(records, opts = {}) {
 
   table { width:100%; border-collapse:collapse; font-size:9pt; }
   thead th {
-    background:#1e3a5f; color:#fff; padding:6px 8px;
+    background:#15803D; color:#fff; padding:6px 8px;
     text-align:left; font-size:8pt; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px;
-    border:1px solid #1e3a5f; white-space:nowrap;
+    border:1px solid #15803D; white-space:nowrap;
   }
   thead th.c-num { text-align:right; }
   tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
   tbody td.c-num  { text-align:right; font-variant-numeric:tabular-nums; }
   tbody td.c-prod { font-weight:600; }
-  tbody td.c-desc { color:#555; font-size:8.5pt; max-width:220px; }
+  tbody td.c-desc { color:#555; font-size:8.5pt; max-width:220px; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
   tbody td.c-cat  { color:#444; }
 
   tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
-    background:#1e3a5f; color:#fff; font-size:9pt; }
+    background:#15803D; color:#fff; font-size:9pt; }
   tfoot td.c-num { text-align:right; }
 
   tbody tr.cat-header-row td {
-    background:#eff6ff; color:#1e3a5f; font-weight:700; font-size:8.5pt;
-    padding:6px 8px; border:1px solid #bfdbfe;
+    background:#F0FDF4; color:#15803D; font-weight:700; font-size:8.5pt;
+    padding:6px 8px; border:1px solid #BBF7D0;
   }
   tbody tr.cat-header-row td.c-num { text-align:right; color:${amtColor}; }
 
@@ -1005,7 +1005,7 @@ window.printHistoryReport = function(records, meta = {}) {
             <td class="c-num">${qty}</td>
             <td class="c-num">${stAfter}</td>
             <td class="c-desc">${escH(deptOrSupplier)}</td>
-            <td class="c-desc">${escH((d.description||'—').slice(0,60))}</td>
+            <td class="c-desc">${escH(d.description||'—')}</td>
           </tr>`;
         }).join('');
 
@@ -1039,7 +1039,7 @@ window.printHistoryReport = function(records, meta = {}) {
 
   /* ── Meta tags ── */
   .rpt-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; font-size:9pt; }
-  .meta-tag { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8;
+  .meta-tag { background:#F0FDF4; border:1px solid #BBF7D0; color:#14532D;
     padding:2px 10px; border-radius:3px; font-weight:600; }
 
   /* ── Summary boxes ── */
@@ -1054,33 +1054,33 @@ window.printHistoryReport = function(records, meta = {}) {
   /* ── Excel-style table ── */
   table { width:100%; border-collapse:collapse; font-size:9pt; }
   thead th {
-    background:#1e3a5f; color:#fff; padding:6px 8px;
+    background:#15803D; color:#fff; padding:6px 8px;
     text-align:left; font-size:8pt; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px;
-    border:1px solid #1e3a5f; white-space:nowrap;
+    border:1px solid #15803D; white-space:nowrap;
   }
   thead th.c-num { text-align:right; }
   tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
   tbody td.c-num   { text-align:right; font-variant-numeric:tabular-nums; }
   tbody td.c-date  { white-space:nowrap; color:#555; font-size:8.5pt; }
   tbody td.c-prod  { font-weight:600; }
-  tbody td.c-desc  { color:#555; font-size:8.5pt; max-width:180px; }
+  tbody td.c-desc  { color:#555; font-size:8.5pt; max-width:180px; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
   tbody td.c-cat   { color:#444; }
 
   /* ── Totals row ── */
   tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
-    background:#1e3a5f; color:#fff; font-size:9pt; }
+    background:#15803D; color:#fff; font-size:9pt; }
   tfoot td.c-num { text-align:right; }
 
   /* ── Category group rows ── */
   tbody tr.cat-header-row td {
-    background:#1e3a5f; color:#fff; font-weight:700;
+    background:#15803D; color:#fff; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px; font-size:9pt;
-    padding:6px 8px; border:1px solid #1e3a5f;
+    padding:6px 8px; border:1px solid #15803D;
   }
   tbody tr.cat-subtotal-row td {
-    background:#eff6ff; color:#1e3a5f; font-weight:700; font-size:8.5pt;
-    padding:5px 8px; border:1px solid #bfdbfe;
+    background:#F0FDF4; color:#15803D; font-weight:700; font-size:8.5pt;
+    padding:5px 8px; border:1px solid #BBF7D0;
   }
   tbody tr.cat-subtotal-row td.c-num { text-align:right; }
 
@@ -1262,10 +1262,10 @@ window.printConsumptionReport = function(data) {
 
   table { width:100%; border-collapse:collapse; font-size:9pt; }
   thead th {
-    background:#1e3a5f; color:#fff; padding:6px 8px;
+    background:#15803D; color:#fff; padding:6px 8px;
     text-align:left; font-size:8pt; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px;
-    border:1px solid #1e3a5f; white-space:nowrap;
+    border:1px solid #15803D; white-space:nowrap;
   }
   thead th.c-num { text-align:right; }
   tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
@@ -1274,7 +1274,7 @@ window.printConsumptionReport = function(data) {
   tbody td.c-cat  { color:#444; }
 
   tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
-    background:#1e3a5f; color:#fff; font-size:9pt; }
+    background:#15803D; color:#fff; font-size:9pt; }
   tfoot td.c-num { text-align:right; }
 
   .rpt-footer { margin-top:16px; padding-top:8px; border-top:1px solid #e5e7eb;
@@ -1564,41 +1564,41 @@ window.printExpensesReport = function(expenses, meta = {}) {
   .rpt-ts { font-size:8.5pt; color:#666; margin-top:2px; }
 
   .rpt-meta { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; font-size:9pt; }
-  .meta-tag { background:#eff6ff; border:1px solid #bfdbfe; color:#1d4ed8;
+  .meta-tag { background:#F0FDF4; border:1px solid #BBF7D0; color:#14532D;
     padding:2px 10px; border-radius:3px; font-weight:600; }
 
   .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
   .s-box { border:1px solid #d1d5db; border-radius:3px; padding:8px 10px; text-align:center; }
   .s-val { font-size:16pt; font-weight:800; line-height:1; }
   .s-lbl { font-size:7.5pt; color:#555; margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
-  .s-box.s-blue { background:#eff6ff; border-color:#bfdbfe; }
+  .s-box.s-blue { background:#F0FDF4; border-color:#BBF7D0; }
 
   table { width:100%; border-collapse:collapse; font-size:9pt; }
   thead th {
-    background:#1e3a5f; color:#fff; padding:6px 8px;
+    background:#15803D; color:#fff; padding:6px 8px;
     text-align:left; font-size:8pt; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px;
-    border:1px solid #1e3a5f; white-space:nowrap;
+    border:1px solid #15803D; white-space:nowrap;
   }
   thead th.c-num { text-align:right; }
   tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
   tbody td.c-num  { text-align:right; font-variant-numeric:tabular-nums; }
   tbody td.c-date { white-space:nowrap; color:#555; font-size:8.5pt; }
-  tbody td.c-desc { color:#555; font-size:8.5pt; }
+  tbody td.c-desc { color:#555; font-size:8.5pt; max-width:220px; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
   tbody td.c-cat  { color:#444; }
 
   tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
-    background:#1e3a5f; color:#fff; font-size:9pt; }
+    background:#15803D; color:#fff; font-size:9pt; }
   tfoot td.c-num { text-align:right; }
 
   tbody tr.cat-header-row td {
-    background:#1e3a5f; color:#fff; font-weight:700;
+    background:#15803D; color:#fff; font-weight:700;
     text-transform:uppercase; letter-spacing:.4px; font-size:9pt;
-    padding:6px 8px; border:1px solid #1e3a5f;
+    padding:6px 8px; border:1px solid #15803D;
   }
   tbody tr.cat-subtotal-row td {
-    background:#eff6ff; color:#1e3a5f; font-weight:700; font-size:8.5pt;
-    padding:5px 8px; border:1px solid #bfdbfe;
+    background:#F0FDF4; color:#15803D; font-weight:700; font-size:8.5pt;
+    padding:5px 8px; border:1px solid #BBF7D0;
   }
   tbody tr.cat-subtotal-row td.c-num { text-align:right; }
 
