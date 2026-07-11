@@ -209,6 +209,22 @@ async function removeDepartment(name) {
   }
 }
 
+function formatLastLogin(ts) {
+  if (!ts) return 'Never';
+  // Firestore Timestamp objects expose .toDate(); fall back to raw Date/string.
+  const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+  if (isNaN(d.getTime())) return 'Never';
+
+  const diffMs  = Date.now() - d.getTime();
+  const diffMin = diffMs / 60000;
+  if (diffMin < 1)  return 'Just now';
+  if (diffMin < 60) return `${Math.floor(diffMin)}m ago`;
+  if (diffMin < 1440) return `${Math.floor(diffMin / 60)}h ago`;
+
+  return d.toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' })
+    + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+}
+
 function escSettingsHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -223,7 +239,7 @@ async function loadUsers() {
   try {
     const snap = await window.firebaseDb.collection('users').get();
     if (snap.empty) {
-      tbody.innerHTML = `<tr><td colspan="4" style="color:var(--color-text-muted);text-align:center;padding:20px">No team members found.</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="color:var(--color-text-muted);text-align:center;padding:20px">No team members found.</td></tr>`;
       return;
     }
     tbody.innerHTML = snap.docs.map(doc => {
@@ -250,6 +266,7 @@ async function loadUsers() {
             <option value="admin"   ${u.role==='admin'   ? 'selected':''}>Admin</option>
           </select>
         </td>
+        <td style="color:var(--color-text-muted);font-size:13px">${formatLastLogin(u.lastLogin)}</td>
         <td>
           ${approveBtn}
           <button class="btn-ghost" style="font-size:12px" onclick="removeUser('${doc.id}')">Remove</button>

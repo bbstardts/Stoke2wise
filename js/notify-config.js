@@ -38,7 +38,7 @@ window.NOTIFY_CONFIG = {
   enabled:          true,
   serviceId:        'service_tk6m5jf',
   templateId:        'template_ol2g4tm',   // sent to YOU when someone signs up
-  approvedTemplateId: 'template_2o8ds4g', // sent to the USER when you approve them
+  approvedTemplateId: 'YOUR_APPROVED_TEMPLATE_ID', // sent to the USER when you approve them
   publicKey:         '50KxzleCHG_NBuQWl',
   adminEmail:        'bbstarbobola@gmail.com',
 };

@@ -65,6 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
+        recordLogin(user.uid);
         window.location.href = 'pages/dashboard.html';
       } catch (err) {
         console.error('Login error:', err.code, err.message);
@@ -352,6 +353,7 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html?pending=1';
         return;
       }
+      recordLogin(user.uid);
       window.location.href = 'pages/dashboard.html';
       return;
     }
@@ -419,6 +421,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     await auth.signOut();
     window.location.href = 'index.html?pending=1';
+  }
+
+  // ── Login tracking ───────────────────────────────────────────────────────
+  // Stamps /users/{uid} with the time of this sign-in so Settings → Team
+  // Members can show "Last active". Fire-and-forget: never blocks the
+  // redirect, and a failure here should never stop someone from logging in.
+  function recordLogin(uid) {
+    if (!db || !uid) return;
+    db.collection('users').doc(uid).set({
+      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true }).catch(err => console.warn('recordLogin failed:', err.message));
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────
