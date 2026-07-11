@@ -152,8 +152,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     const feed       = document.getElementById('activityFeed');
 
     try {
-      // Single simple query — no index needed
-      const snap = await db.collection('transactions').limit(50).get();
+      // Ordered by createdAt (desc) so the dashboard, chart, and KPIs
+      // reflect the most recent 50 transactions — not an arbitrary sample.
+      // Single-field orderBy, no composite index required.
+      const snap = await db.collection('transactions')
+        .orderBy('createdAt', 'desc')
+        .limit(50)
+        .get();
 
       let docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
 

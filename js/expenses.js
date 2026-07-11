@@ -68,6 +68,8 @@ function renderCategoryOptions() {
     filterSel.value = expenseCategories.includes(current) ? current : 'all';
     filterCategory = filterSel.value;
   }
+  makeSearchable(formSel,   { searchable: false });
+  makeSearchable(filterSel, { searchable: false });
 }
 
 function renderCategoryManager() {

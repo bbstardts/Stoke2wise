@@ -66,6 +66,12 @@ function wireControls() {
   const dateToInput   = document.getElementById('dateTo');
   const printBtn      = document.getElementById('printHistoryBtn');
 
+  // Custom-styled dropdowns instead of the plain native <select> look.
+  // No typing needed — short, fixed lists — so search is turned off.
+  makeSearchable(actionFilter, { searchable: false });
+  makeSearchable(deptFilter,   { searchable: false });
+  makeSearchable(dateRangeSel, { searchable: false });
+
   searchInput.addEventListener('input', () => {
     searchQuery = searchInput.value.trim().toLowerCase();
     clearBtn.classList.toggle('hidden', searchQuery === '');
@@ -127,6 +133,8 @@ function populateDepartmentFilter() {
     filterDepartment = 'all';
     sel.value = 'all';
   }
+  // Re-sync the custom dropdown UI now that the underlying <option>s changed.
+  makeSearchable(sel, { searchable: false });
 }
 
 function getFiltered() {

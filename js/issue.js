@@ -51,6 +51,7 @@ async function loadDepartments() {
   if (sel) {
     sel.innerHTML = '<option value="">— Select department —</option>' +
       departmentList.map(d => `<option value="${escHtml(d)}">${escHtml(d)}</option>`).join('');
+    makeSearchable(sel, { searchable: false });
   }
 }
 
@@ -205,6 +206,9 @@ function removeLineItem(id) {
     checkOverallWarning();
     return;
   }
+  ['catSel_', 'mCatSel_', 'prodSel_', 'mProdSel_'].forEach(prefix => {
+    destroySearchableSelect(document.getElementById(`${prefix}${id}`));
+  });
   document.querySelector(`#issueItemsBody tr[data-row="${id}"]`)?.remove();
   document.querySelector(`#issueItemsCards .line-item-card[data-row="${id}"]`)?.remove();
   updateRemoveButtonsState();
@@ -521,9 +525,9 @@ function renderIssueRows(issues) {
     </tr>`;
 
     const itemRows = items.map(item => `<tr>
+      <td>${escHtml(item.productName || '—')}</td>
       <td></td>
       <td>${escHtml(item.category || '—')}</td>
-      <td>${escHtml(item.productName || '—')}</td>
       <td><span class="qty-badge qty-badge--out" style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;background:#fee2e2;color:#991b1b">−${Number(item.qty)||0}</span></td>
       <td colspan="2">${escHtml(item.description || '—')}</td>
     </tr>`).join('');

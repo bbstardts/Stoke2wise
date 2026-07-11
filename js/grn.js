@@ -48,6 +48,7 @@ async function loadSuppliers() {
   if (sel) {
     sel.innerHTML = '<option value="">— Select supplier —</option>' +
       supplierList.map(s => `<option value="${s.id}">${escHtml(s.name)}</option>`).join('');
+    makeSearchable(sel, { searchable: false });
   }
   if (hint) hint.classList.toggle('hidden', supplierList.length > 0);
 }
@@ -201,6 +202,9 @@ function removeLineItem(id) {
     clearLineItem(id);
     return;
   }
+  ['catSel_', 'mCatSel_', 'prodSel_', 'mProdSel_'].forEach(prefix => {
+    destroySearchableSelect(document.getElementById(`${prefix}${id}`));
+  });
   document.querySelector(`#grnItemsBody tr[data-row="${id}"]`)?.remove();
   document.querySelector(`#grnItemsCards .line-item-card[data-row="${id}"]`)?.remove();
   updateRemoveButtonsState();
@@ -483,9 +487,9 @@ function renderGrnRows(grns) {
     </tr>`;
 
     const itemRows = items.map(item => `<tr>
+      <td>${escHtml(item.productName || '—')}</td>
       <td></td>
       <td>${escHtml(item.category || '—')}</td>
-      <td>${escHtml(item.productName || '—')}</td>
       <td><span class="qty-badge qty-badge--in" style="display:inline-block;padding:2px 8px;border-radius:6px;font-size:12px;font-weight:600;background:#dcfce7;color:#166534">+${Number(item.qty)||0}</span></td>
       <td colspan="2">${escHtml(item.description || '—')}</td>
     </tr>`).join('');

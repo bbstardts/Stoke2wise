@@ -129,11 +129,8 @@
   cursor: not-allowed;
 }
 .searchable-select__list {
-  position: absolute;
-  z-index: 40;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+  position: fixed;
+  z-index: 3000;
   max-height: 220px;
   overflow-y: auto;
   background: var(--color-surface);
@@ -158,6 +155,35 @@
   padding: 8px 10px;
   font-size: 12px;
   color: var(--color-text-muted);
+}
+
+/* Plain mode (search removed): looks/behaves like a normal dropdown —
+   click to open the full list, no typing. Cursor + chevron signal that. */
+.searchable-select--plain { position: relative; }
+.searchable-select--plain .searchable-select__input {
+  cursor: pointer;
+  caret-color: transparent;
+  padding-right: 28px;
+}
+.searchable-select--plain::after {
+  content: '';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  border-right: 2px solid var(--color-text-muted);
+  border-bottom: 2px solid var(--color-text-muted);
+  transform: translateY(-65%) rotate(45deg);
+  pointer-events: none;
+}
+
+/* Larger touch targets on small screens so options are easy to tap */
+@media (max-width: 600px) {
+  .searchable-select__input { padding: 10px 12px; font-size: 14px; }
+  .searchable-select--plain .searchable-select__input { padding-right: 30px; }
+  .searchable-select__option { padding: 11px 12px; font-size: 14px; }
+  .searchable-select__list { max-height: 45vh; }
 }
 
 /* Qty input */

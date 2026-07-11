@@ -36,6 +36,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+  makeSearchable(document.getElementById('inviteRole'), { searchable: false });
   loadProfile();
   loadWarehouseConfig();
   loadDepartments();
@@ -115,6 +116,9 @@ async function loadWarehouseConfig() {
   } catch (err) {
     console.error('loadWarehouseConfig error:', err);
   }
+  // Wrapped after the value is set above, so the custom dropdown's visible
+  // text reflects the loaded currency rather than the select's default option.
+  makeSearchable(document.getElementById('currency'), { searchable: false });
 }
 
 async function saveWarehouseConfig(e) {
@@ -212,6 +216,10 @@ function escSettingsHtml(str) {
 // ── Users ────────────────────────────────────
 async function loadUsers() {
   const tbody = document.getElementById('usersBody');
+  // loadUsers() re-renders this table repeatedly (after invite/approve/remove).
+  // Each role <select> was wrapped with a body-level floating dropdown list;
+  // tear those down before wiping the old rows or they'd pile up unseen in <body>.
+  tbody.querySelectorAll('select').forEach(destroySearchableSelect);
   try {
     const snap = await window.firebaseDb.collection('users').get();
     if (snap.empty) {
@@ -248,6 +256,7 @@ async function loadUsers() {
         </td>
       </tr>`;
     }).join('');
+    tbody.querySelectorAll('select').forEach(sel => makeSearchable(sel, { searchable: false }));
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="4" style="color:var(--color-text-muted);text-align:center;padding:20px">Connect Firebase to manage team members.</td></tr>`;
   }

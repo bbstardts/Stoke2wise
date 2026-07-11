@@ -56,6 +56,7 @@ const pageIndicator   = document.getElementById('pageIndicator');
 
 // ── Init ──────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
+  makeSearchable(sortSelect, { searchable: false });
   addBtn.addEventListener('click',          () => openModal());
   closeModalBtn.addEventListener('click',   closeModal);
   cancelModalBtn.addEventListener('click',  closeModal);
@@ -251,12 +252,14 @@ function populateCategoryFilter() {
 
   categoryFilter.innerHTML = '<option value="">All Categories</option>' +
     cats.map(c => `<option value="${escPHtml(c)}" ${c === current ? 'selected' : ''}>${escPHtml(c)}</option>`).join('');
+  makeSearchable(categoryFilter, { searchable: false });
 }
 
 function populateExistingProductSelect() {
   const current = existingSelect.value;
   existingSelect.innerHTML = '<option value="">— Type a new product name below instead —</option>' +
     allProducts.map(p => `<option value="${p.id}" ${p.id === current ? 'selected' : ''}>${escPHtml(p.name)} (${escPHtml(p.category || 'Uncategorized')})</option>`).join('');
+  makeSearchable(existingSelect, { searchable: false });
 }
 
 async function handleExistingProductPick() {
