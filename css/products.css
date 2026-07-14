@@ -241,7 +241,7 @@ td code {
 
 /* Base style for the View button */
 .action-btn {
-  background: white;   /* green fill */
+  
   color: black;                        /* white text so it's readable on green */
   border: none;                       /* remove default button border */
   padding: 6px 14px;                  /* comfortable click area */
@@ -255,6 +255,7 @@ td code {
 /* Hover state — runs when the mouse is over the button */
 .action-btn:hover {
   background: var(--color-primary);   /* darker green on hover */
+  color: white;
   transform: scale(1.06);                /* slightly grow the button */
   box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* lift it off the page a bit */
 }
