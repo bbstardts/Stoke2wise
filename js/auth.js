@@ -435,13 +435,43 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── Login tracking ───────────────────────────────────────────────────────
   // Stamps /users/{uid} with the time of this sign-in so Settings → Team
-  // Members can show "Last active". Fire-and-forget: never blocks the
-  // redirect, and a failure here should never stop someone from logging in.
+  // Members can show "Last active", and appends a row to
+  // /users/{uid}/loginHistory so admins can see a full sign-in log (not
+  // just the most recent one) via the History button in Settings.
+  // Never blocks the redirect — a failure here should never stop someone
+  // from logging in.
   function recordLogin(uid) {
     if (!db || !uid) return Promise.resolve();
-    return db.collection('users').doc(uid).set({
-      lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-    }, { merge: true }).catch(err => console.warn('recordLogin failed:', err.message));
+    const ts = firebase.firestore.FieldValue.serverTimestamp();
+    return Promise.all([
+      db.collection('users').doc(uid).set({ lastLogin: ts }, { merge: true }),
+      db.collection('users').doc(uid).collection('loginHistory').add({
+        timestamp: ts,
+        device: getDeviceLabel()
+      })
+    ]).catch(err => console.warn('recordLogin failed:', err.message));
+  }
+
+  // Best-effort, readable "Browser on OS" label from the user agent string.
+  // Not meant to be precise device fingerprinting — just enough for an
+  // admin skimming the login history to recognize "yep, that's my laptop."
+  function getDeviceLabel() {
+    const ua = navigator.userAgent || '';
+    let browser = 'Unknown browser';
+    if (/Edg\//.test(ua))                          browser = 'Edge';
+    else if (/OPR\//.test(ua))                     browser = 'Opera';
+    else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) browser = 'Chrome';
+    else if (/Firefox\//.test(ua))                 browser = 'Firefox';
+    else if (/Safari\//.test(ua) && !/Chrome/.test(ua))   browser = 'Safari';
+
+    let os = 'Unknown OS';
+    if (/Windows/.test(ua))            os = 'Windows';
+    else if (/Mac OS X/.test(ua))      os = 'macOS';
+    else if (/Android/.test(ua))       os = 'Android';
+    else if (/iPhone|iPad|iPod/.test(ua)) os = 'iOS';
+    else if (/Linux/.test(ua))         os = 'Linux';
+
+    return `${browser} on ${os}`;
   }
 
   // ── Helpers ───────────────────────────────────────────────────────────────

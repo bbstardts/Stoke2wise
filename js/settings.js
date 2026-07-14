@@ -55,6 +55,10 @@ document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('clearHistoryPasskey').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') { e.preventDefault(); clearAllHistory(); }
   });
+  document.getElementById('loginHistoryClose').addEventListener('click', closeLoginHistory);
+  document.getElementById('loginHistoryModal').addEventListener('click', (e) => {
+    if (e.target.id === 'loginHistoryModal') closeLoginHistory();
+  });
 });
 
 // ── Profile ──────────────────────────────────
@@ -225,6 +229,18 @@ function formatLastLogin(ts) {
     + ' · ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
 }
 
+const INACTIVE_DAYS_THRESHOLD = 30;
+
+// True if the person hasn't logged in for 30+ days, OR has never logged in
+// at all. Used to badge dormant accounts on the Team Members table.
+function isInactive(ts) {
+  if (!ts) return true;
+  const d = typeof ts.toDate === 'function' ? ts.toDate() : new Date(ts);
+  if (isNaN(d.getTime())) return true;
+  const diffDays = (Date.now() - d.getTime()) / 86400000;
+  return diffDays >= INACTIVE_DAYS_THRESHOLD;
+}
+
 function escSettingsHtml(str) {
   return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
@@ -256,6 +272,10 @@ async function loadUsers() {
         ? `<button class="btn-primary" style="margin-right:8px;font-size:12px;padding:6px 12px" onclick="approveUser('${doc.id}')">Approve</button>`
         : '';
 
+      const inactiveBadge = (!isInviteOnly && isInactive(u.lastLogin))
+        ? `<span class="status-pill status-pill--inactive" style="margin-left:6px">Inactive</span>`
+        : '';
+
       return `<tr>
         <td>${u.displayName || '—'}</td>
         <td>${u.email || '—'} ${statusPill}</td>
@@ -266,9 +286,10 @@ async function loadUsers() {
             <option value="admin"   ${u.role==='admin'   ? 'selected':''}>Admin</option>
           </select>
         </td>
-        <td style="color:var(--color-text-muted);font-size:13px">${formatLastLogin(u.lastLogin)}</td>
+        <td style="color:var(--color-text-muted);font-size:13px;white-space:nowrap">${formatLastLogin(u.lastLogin)}${inactiveBadge}</td>
         <td>
           ${approveBtn}
+          ${isInviteOnly ? '' : `<button class="btn-ghost" style="font-size:12px;margin-right:8px" onclick="openLoginHistory('${doc.id}', '${escSettingsHtml(u.displayName || u.email || 'this user')}')">History</button>`}
           <button class="btn-ghost" style="font-size:12px" onclick="removeUser('${doc.id}')">Remove</button>
         </td>
       </tr>`;
@@ -277,6 +298,57 @@ async function loadUsers() {
   } catch (err) {
     tbody.innerHTML = `<tr><td colspan="4" style="color:var(--color-text-muted);text-align:center;padding:20px">Connect Firebase to manage team members.</td></tr>`;
   }
+}
+
+const LOGIN_HISTORY_LIMIT = 15;
+
+// Fetches the most recent entries from /users/{uid}/loginHistory and shows
+// them in a modal. This is the full sign-in log — Last Login on the table
+// only ever shows the single most recent one.
+async function openLoginHistory(uid, displayName) {
+  const modal = document.getElementById('loginHistoryModal');
+  const title = document.getElementById('loginHistoryTitle');
+  const body  = document.getElementById('loginHistoryBody');
+
+  title.textContent = `Login History — ${displayName}`;
+  body.innerHTML = `<p style="color:var(--color-text-muted);font-size:13px">Loading…</p>`;
+  modal.classList.remove('hidden');
+
+  try {
+    const snap = await window.firebaseDb
+      .collection('users').doc(uid)
+      .collection('loginHistory')
+      .orderBy('timestamp', 'desc')
+      .limit(LOGIN_HISTORY_LIMIT)
+      .get();
+
+    if (snap.empty) {
+      body.innerHTML = `<p style="color:var(--color-text-muted);font-size:13px">No recorded logins yet for this account.</p>`;
+      return;
+    }
+
+    body.innerHTML = `
+      <table class="data-table">
+        <thead><tr><th>When</th><th>Device</th></tr></thead>
+        <tbody>
+          ${snap.docs.map(doc => {
+            const h = doc.data();
+            return `<tr>
+              <td>${formatLastLogin(h.timestamp)}</td>
+              <td style="color:var(--color-text-muted)">${escSettingsHtml(h.device || 'Unknown device')}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      ${snap.docs.length === LOGIN_HISTORY_LIMIT ? `<p style="color:var(--color-text-muted);font-size:12px;margin-top:10px">Showing the ${LOGIN_HISTORY_LIMIT} most recent logins.</p>` : ''}
+    `;
+  } catch (err) {
+    body.innerHTML = `<p style="color:var(--color-danger);font-size:13px">Failed to load history: ${escSettingsHtml(err.message)}</p>`;
+  }
+}
+
+function closeLoginHistory() {
+  document.getElementById('loginHistoryModal').classList.add('hidden');
 }
 
 async function sendInvite(e) {

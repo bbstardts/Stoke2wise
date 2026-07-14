@@ -272,6 +272,7 @@ html, body {
 }
 .status-pill--pending { background: rgba(217,119,6,0.12); color: #B45309; }
 .status-pill--active  { background: rgba(22,163,74,0.12); color: var(--color-success); }
+.status-pill--inactive { background: rgba(217,119,6,0.10); color: var(--color-warning); }
 
 .error-msg {
   color: var(--color-danger);
