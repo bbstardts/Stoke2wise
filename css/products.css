@@ -241,7 +241,7 @@ td code {
 
 /* Base style for the View button */
 .action-btn {
-  
+  background: white;
   color: black;                        /* black text, readable on transparent/light bg */
   border: 1px solid black; 
   .action-btn {
