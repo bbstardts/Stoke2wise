@@ -65,7 +65,14 @@ document.addEventListener('DOMContentLoaded', () => {
           return;
         }
 
-        recordLogin(user.uid);
+        // Wait for the login timestamp to actually finish writing before we
+        // navigate away — otherwise the redirect can cut the request off
+        // mid-flight. Capped at 3s so a slow/offline connection never
+        // blocks someone from getting into the app.
+        await Promise.race([
+          recordLogin(user.uid),
+          new Promise(resolve => setTimeout(resolve, 3000))
+        ]);
         window.location.href = 'pages/dashboard.html';
       } catch (err) {
         console.error('Login error:', err.code, err.message);
@@ -353,7 +360,10 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html?pending=1';
         return;
       }
-      recordLogin(user.uid);
+      await Promise.race([
+        recordLogin(user.uid),
+        new Promise(resolve => setTimeout(resolve, 3000))
+      ]);
       window.location.href = 'pages/dashboard.html';
       return;
     }
@@ -428,8 +438,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // Members can show "Last active". Fire-and-forget: never blocks the
   // redirect, and a failure here should never stop someone from logging in.
   function recordLogin(uid) {
-    if (!db || !uid) return;
-    db.collection('users').doc(uid).set({
+    if (!db || !uid) return Promise.resolve();
+    return db.collection('users').doc(uid).set({
       lastLogin: firebase.firestore.FieldValue.serverTimestamp()
     }, { merge: true }).catch(err => console.warn('recordLogin failed:', err.message));
   }
