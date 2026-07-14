@@ -1211,140 +1211,131 @@ window.downloadCSV = function(rows, filename) {
    *   data.deptTotals   {Object}  — { dept: totalQty }
    *   data.grandTotal   {number}
    ──────────────────────────────────────────────────────────────────────── */
+// Builds a REAL text-based PDF (every number is selectable/searchable text,
+// not a screenshot) using jsPDF + jspdf-autotable. Requires the jsPDF and
+// jspdf-autotable <script> tags to be loaded on the page.
 window.printConsumptionReport = function(data) {
+  if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
+    console.error('jsPDF is not loaded — add the jsPDF <script> tags to this page.');
+    alert('PDF export is unavailable right now (missing library). Please try again or refresh the page.');
+    return;
+  }
+
+  const { jsPDF } = window.jspdf;
   const now         = formatDateTime(new Date().toISOString());
-  const departments  = data.departments || [];
-  const rows         = data.rows || [];
-  const deptTotals   = data.deptTotals || {};
-  const grandTotal    = data.grandTotal || 0;
-  const monthLabel   = data.monthLabel || '—';
+  const departments = data.departments || [];
+  const rows        = data.rows || [];
+  const deptTotals  = data.deptTotals || {};
+  const grandTotal  = data.grandTotal || 0;
+  const monthLabel  = data.monthLabel || '\u2014';
 
-  const deptHeaders = departments.map(d => `<th class="c-num">${escRpt(d)}</th>`).join('');
-  const deptFootCells = departments.map(d =>
-    `<td class="c-num">${(deptTotals[d] || 0).toLocaleString()}</td>`).join('');
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+  const pageWidth = doc.internal.pageSize.getWidth();
+  const margin = 14;
 
-  const bodyRows = rows.length
-    ? rows.map((r, i) => {
-        const deptCells = departments.map(d =>
-          `<td class="c-num">${(r.byDept[d] || 0) ? (r.byDept[d]).toLocaleString() : '\u2014'}</td>`).join('');
-        return `<tr style="background:${i % 2 === 0 ? '#ffffff' : '#f7f8fa'}">
-          <td class="c-cat">${escRpt(r.category || '\u2014')}</td>
-          <td class="c-prod">${escRpt(r.productName || '\u2014')}</td>
-          ${deptCells}
-          <td class="c-num" style="font-weight:700">${r.total.toLocaleString()}</td>
-        </tr>`;
-      }).join('')
-    : `<tr><td colspan="${departments.length + 3}" style="text-align:center;padding:16px;color:#888">No issues recorded for this month.</td></tr>`;
+  // ── Header ──────────────────────────────────────────────────────────────
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.setTextColor(17, 17, 17);
+  doc.text('StockWise', margin, 18);
 
-  const html = `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<title>Monthly Stock Consumption Report — ${escRpt(monthLabel)}</title>
-<style>
-  * { box-sizing:border-box; margin:0; padding:0; }
-  body { font-family:'Segoe UI',Arial,sans-serif; font-size:10pt; color:#111; background:#fff; }
-  .page { width:100%; max-width:1050px; margin:0 auto; padding:20px 24px; }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(85, 85, 85);
+  doc.text('Makiaza Farm Ltd. \u2014 Warehouse Management System', margin, 23);
 
-  .rpt-header { display:flex; justify-content:space-between; align-items:flex-end;
-    border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; }
-  .rpt-co { font-size:18pt; font-weight:800; letter-spacing:-.5px; }
-  .rpt-co-sub { font-size:8pt; color:#555; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
-  .rpt-title-blk { text-align:right; }
-  .rpt-title { font-size:12pt; font-weight:700; }
-  .rpt-ts { font-size:8.5pt; color:#666; margin-top:2px; }
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(12);
+  doc.setTextColor(17, 17, 17);
+  doc.text('Monthly Stock Consumption Report', pageWidth - margin, 18, { align: 'right' });
 
-  .summary { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:14px; }
-  .s-box { border:1px solid #d1d5db; border-radius:3px; padding:8px 10px; text-align:center; }
-  .s-val { font-size:16pt; font-weight:800; line-height:1; }
-  .s-lbl { font-size:7.5pt; color:#555; margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
-  .s-box.s-amt { background:#fef2f2; border-color:#fca5a5; }
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8.5);
+  doc.setTextColor(102, 102, 102);
+  doc.text(`${monthLabel}   \u00b7   Printed: ${now}`, pageWidth - margin, 23, { align: 'right' });
 
-  table { width:100%; border-collapse:collapse; font-size:9pt; }
-  thead th {
-    background:#15803D; color:#fff; padding:6px 8px;
-    text-align:left; font-size:8pt; font-weight:700;
-    text-transform:uppercase; letter-spacing:.4px;
-    border:1px solid #15803D; white-space:nowrap;
-  }
-  thead th.c-num { text-align:right; }
-  tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
-  tbody td.c-num  { text-align:right; font-variant-numeric:tabular-nums; }
-  tbody td.c-prod { font-weight:600; }
-  tbody td.c-cat  { color:#444; }
+  doc.setDrawColor(17, 17, 17);
+  doc.setLineWidth(0.8);
+  doc.line(margin, 27, pageWidth - margin, 27);
 
-  tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
-    background:#15803D; color:#fff; font-size:9pt; }
-  tfoot td.c-num { text-align:right; }
+  // ── Summary boxes ───────────────────────────────────────────────────────
+  const boxY   = 33;
+  const boxH   = 16;
+  const boxGap = 4;
+  const boxW   = (pageWidth - margin * 2 - boxGap * 2) / 3;
+  const summaryBoxes = [
+    { val: String(rows.length),        lbl: 'PRODUCTS ISSUED',  amt: false },
+    { val: String(departments.length), lbl: 'DEPARTMENTS',      amt: false },
+    { val: grandTotal.toLocaleString(),lbl: 'TOTAL QTY ISSUED', amt: true  },
+  ];
+  summaryBoxes.forEach((box, i) => {
+    const x = margin + i * (boxW + boxGap);
+    if (box.amt) { doc.setFillColor(254, 242, 242); doc.setDrawColor(252, 165, 165); }
+    else         { doc.setFillColor(255, 255, 255); doc.setDrawColor(209, 213, 219); }
+    doc.roundedRect(x, boxY, boxW, boxH, 1, 1, 'FD');
 
-  .rpt-footer { margin-top:16px; padding-top:8px; border-top:1px solid #e5e7eb;
-    font-size:8pt; color:#9ca3af; text-align:center; }
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(15);
+    doc.setTextColor(...(box.amt ? [153, 27, 27] : [17, 17, 17]));
+    doc.text(box.val, x + boxW / 2, boxY + 8, { align: 'center' });
 
-  @page { size:A4 landscape; margin:12mm 14mm; }
-  @media print {
-    body { font-size:9pt; }
-    .page { padding:0; }
-    thead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-    tfoot { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
-  }
-</style>
-</head>
-<body>
-<div class="page">
+    doc.setFont('helvetica', 'normal');
+    doc.setFontSize(7);
+    doc.setTextColor(85, 85, 85);
+    doc.text(box.lbl, x + boxW / 2, boxY + 13, { align: 'center' });
+  });
 
-  <div class="rpt-header">
-    <div>
-      <div class="rpt-co">StockWise</div>
-      <div class="rpt-co-sub">Makiaza Farm Ltd. — Warehouse Management System</div>
-    </div>
-    <div class="rpt-title-blk">
-      <div class="rpt-title">Monthly Stock Consumption Report</div>
-      <div class="rpt-ts">${escRpt(monthLabel)} &nbsp;\u00b7&nbsp; Printed: ${now}</div>
-    </div>
-  </div>
+  // ── Table (real text cells via autoTable) ──────────────────────────────
+  const head = [['Category', 'Product', ...departments, 'Total']];
+  const body = rows.length
+    ? rows.map(r => [
+        r.category || '\u2014',
+        r.productName || '\u2014',
+        ...departments.map(d => (r.byDept[d] ? r.byDept[d].toLocaleString() : '\u2014')),
+        r.total.toLocaleString(),
+      ])
+    : [[{
+        content: 'No issues recorded for this month.',
+        colSpan: departments.length + 3,
+        styles: { halign: 'center', textColor: [136, 136, 136] }
+      }]];
 
-  <div class="summary">
-    <div class="s-box">
-      <div class="s-val">${rows.length}</div>
-      <div class="s-lbl">Products Issued</div>
-    </div>
-    <div class="s-box">
-      <div class="s-val">${departments.length}</div>
-      <div class="s-lbl">Departments</div>
-    </div>
-    <div class="s-box s-amt">
-      <div class="s-val" style="color:#991b1b">${grandTotal.toLocaleString()}</div>
-      <div class="s-lbl">Total Qty Issued</div>
-    </div>
-  </div>
+  const foot = [[
+    { content: 'TOTAL', colSpan: 2 },
+    ...departments.map(d => (deptTotals[d] || 0).toLocaleString()),
+    grandTotal.toLocaleString(),
+  ]];
 
-  <table>
-    <thead>
-      <tr>
-        <th>Category</th>
-        <th>Product</th>
-        ${deptHeaders}
-        <th class="c-num">Total</th>
-      </tr>
-    </thead>
-    <tbody>${bodyRows}</tbody>
-    <tfoot>
-      <tr>
-        <td colspan="2">TOTAL</td>
-        ${deptFootCells}
-        <td class="c-num">${grandTotal.toLocaleString()}</td>
-      </tr>
-    </tfoot>
-  </table>
+  doc.autoTable({
+    head, body, foot,
+    startY: boxY + boxH + 8,
+    margin: { left: margin, right: margin },
+    styles:     { font: 'helvetica', fontSize: 9, cellPadding: 2, lineColor: [209, 213, 219], lineWidth: 0.1 },
+    headStyles: { fillColor: [21, 128, 61], textColor: 255, fontStyle: 'bold', fontSize: 8 },
+    footStyles: { fillColor: [21, 128, 61], textColor: 255, fontStyle: 'bold', fontSize: 9 },
+    bodyStyles: { textColor: [17, 17, 17] },
+    alternateRowStyles: { fillColor: [247, 248, 250] },
+    // Right-align every numeric column (everything except Category/Product).
+    didParseCell: (hook) => {
+      if (hook.column.index >= 2) hook.cell.styles.halign = 'right';
+    },
+  });
 
-  <div class="rpt-footer">
-    StockWise WMS &nbsp;\u00b7&nbsp; Monthly Stock Consumption Report &nbsp;\u00b7&nbsp; ${escRpt(monthLabel)}
-  </div>
-</div>
-</body>
-</html>`;
+  // ── Footer ──────────────────────────────────────────────────────────────
+  const finalY = doc.lastAutoTable.finalY || (boxY + boxH + 8);
+  doc.setDrawColor(229, 231, 235);
+  doc.setLineWidth(0.2);
+  doc.line(margin, finalY + 6, pageWidth - margin, finalY + 6);
 
-  printViaIframe(html, `Consumption-Report-${monthLabel.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(8);
+  doc.setTextColor(156, 163, 175);
+  doc.text(
+    `StockWise WMS   \u00b7   Monthly Stock Consumption Report   \u00b7   ${monthLabel}`,
+    pageWidth / 2, finalY + 11, { align: 'center' }
+  );
+
+  doc.save(`Consumption-Report-${monthLabel.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
 };
 
 /* ─── Purchase Request / Reorder Report ─────────────────────────────────────
