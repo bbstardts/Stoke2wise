@@ -114,7 +114,7 @@
   white-space: nowrap;
 }
 .action-btn:hover             { color: var(--color-text); border-color: var(--color-text-muted); }
-.action-btn--danger:hover     { color: var(--color-danger); border-color: var(--color-danger); }
+.action-btn--danger:hover     { color: #fff; background: var(--color-danger); border-color: var(--color-danger); }
 
 /* ── Image Upload Area ── */
 .image-upload-area {
