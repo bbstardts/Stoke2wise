@@ -116,3 +116,28 @@
   .expenses-toolbar { flex-direction: column; align-items: stretch; }
   .expenses-toolbar-spacer { display: none; }
 }
+
+/* Base style for the View button */
+.action-btn {
+  background: var(--color-primary);   /* green fill */
+  color: #fff;                        /* white text so it's readable on green */
+  border: none;                       /* remove default button border */
+  padding: 6px 14px;                  /* comfortable click area */
+  border-radius: 6px;                 /* soft rounded corners */
+  cursor: pointer;                    /* show hand cursor on hover */
+  transition: transform 0.15s ease,   /* animate the scale-up smoothly */
+              box-shadow 0.15s ease,  /* animate the shadow appearing */
+              background 0.15s ease;  /* animate the color darkening */
+}
+
+/* Hover state — runs when the mouse is over the button */
+.action-btn:hover {
+  background: var(--color-primary-dark); /* darker green on hover */
+  transform: scale(1.06);                /* slightly grow the button */
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15); /* lift it off the page a bit */
+}
+
+/* Active state — runs while the button is being clicked */
+.action-btn:active {
+  transform: scale(0.96); /* slight shrink for a "pressed" feel */
+}
