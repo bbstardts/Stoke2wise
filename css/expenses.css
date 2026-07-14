@@ -121,10 +121,8 @@
 .action-btn {
   
   color: black;                        /* black text, readable on transparent/light bg */
-  border: 2px solid var(--color-primary); /* green outline around the button */
+  border: 1px solid black; 
   .action-btn {
-  border: 2px solid var(--color-primary); /* green outline around the button */
-}
   padding: 6px 14px;                  /* comfortable click area */
   border-radius: 6px;                 /* soft rounded corners */
   cursor: pointer;                    /* show hand cursor on hover */
