@@ -113,8 +113,8 @@
   transition: color var(--transition), border-color var(--transition);
   white-space: nowrap;
 }
-.action-btn:hover             { color: #fff; background: red; border-color: red; }
-.action-btn--danger:hover     { color: #fff; background: red; border-color: red; }
+.action-btn:hover             { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+.action-btn--danger:hover     { color: #fff; background: var(--color-danger); border-color: var(--color-danger); }
 
 /* ── Image Upload Area ── */
 .image-upload-area {
