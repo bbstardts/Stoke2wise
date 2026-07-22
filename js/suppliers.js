@@ -63,11 +63,11 @@ async function saveSupplierToFirestore(data) {
 }
 
 async function deleteSupplier(id) {
-  if (!confirm('Delete this supplier? This cannot be undone.')) return;
+  if (!(await customConfirm('Delete this supplier? This cannot be undone.', { danger: true }))) return;
   try {
     await db.collection('suppliers').doc(id).delete();
   } catch (err) {
-    alert('Error deleting supplier: ' + err.message);
+    customAlert('Error deleting supplier: ' + err.message, 'error');
   }
 }
 

@@ -72,6 +72,10 @@ function wireControls() {
   makeSearchable(deptFilter,   { searchable: false });
   makeSearchable(dateRangeSel, { searchable: false });
 
+  // Custom-styled calendar instead of the browser's native date popup.
+  makeDatePicker(dateFromInput, { clearable: true });
+  makeDatePicker(dateToInput,   { clearable: true });
+
   searchInput.addEventListener('input', () => {
     searchQuery = searchInput.value.trim().toLowerCase();
     clearBtn.classList.toggle('hidden', searchQuery === '');

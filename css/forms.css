@@ -102,14 +102,22 @@
   width: 100%;
 }
 .searchable-select__native {
-  /* keep in DOM (for existing onchange/.value logic) but visually hidden */
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  height: 0;
-  width: 0;
-  border: none;
-  padding: 0;
+  /* keep in DOM (for existing onchange/.value logic) but visually hidden.
+     !important here is deliberate: this select is still a CSS descendant
+     of whatever form row it lives in (e.g. .settings-form--inline select),
+     and those page-level rules can carry their own flex/min-width that
+     would otherwise re-expand this "hidden" element into a real, invisible
+     box sitting off in the layout (which is what was pushing the Settings
+     page's width out and creating the extra blank space on the right). */
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  padding: 0 !important;
 }
 .searchable-select__input {
   width: 100%;

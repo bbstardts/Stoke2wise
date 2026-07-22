@@ -33,6 +33,7 @@ let sortDir           = 'desc';
 document.addEventListener('DOMContentLoaded', () => {
   const today = new Date();
   document.getElementById('expenseDate').value = today.toISOString().slice(0, 10);
+  makeDatePicker(document.getElementById('expenseDate'), { clearable: false });
 
   wireControls();
   loadCategories();
@@ -98,7 +99,7 @@ async function addExpenseCategory(e) {
       ? doc.data().expenseCategories
       : DEFAULT_EXPENSE_CATEGORIES.slice();
     if (cats.some(c => c.toLowerCase() === name.toLowerCase())) {
-      alert('That category already exists.');
+      customAlert('That category already exists.', 'warning');
       return;
     }
     cats.push(name);
@@ -108,12 +109,12 @@ async function addExpenseCategory(e) {
     renderCategoryOptions();
     renderCategoryManager();
   } catch (err) {
-    alert('Failed to add category: ' + err.message);
+    customAlert('Failed to add category: ' + err.message, 'error');
   }
 }
 
 async function removeExpenseCategory(name) {
-  if (!confirm(`Remove category "${name}"? Past expenses keep their recorded category.`)) return;
+  if (!(await customConfirm(`Remove category "${name}"? Past expenses keep their recorded category.`, { danger: true }))) return;
   try {
     const ref = window.firebaseDb.collection('settings').doc('config');
     const doc = await ref.get();
@@ -126,7 +127,7 @@ async function removeExpenseCategory(name) {
     renderCategoryOptions();
     renderCategoryManager();
   } catch (err) {
-    alert('Failed to remove category: ' + err.message);
+    customAlert('Failed to remove category: ' + err.message, 'error');
   }
 }
 window.removeExpenseCategory = removeExpenseCategory;
@@ -301,7 +302,7 @@ function renderTable() {
       <td class="td-desc" title="${escExp(x.description || '')}">${escExp((x.description || '—'))}</td>
       <td class="amount-cell">${fmtCurrency(x.amount)}</td>
       <td>
-        <button class="action-btn" onclick="deleteExpense('${x.id}')" data-min-role="staff">Delete</button>
+        <button class="action-btn action-btn--danger" onclick="deleteExpense('${x.id}')" data-min-role="staff">Delete</button>
       </td>
     </tr>`).join('');
 
@@ -326,7 +327,7 @@ function renderTable() {
 }
 
 async function deleteExpense(id) {
-  if (!confirm('Delete this expense entry?')) return;
+  if (!(await customConfirm('Delete this expense entry?', { danger: true }))) return;
   try {
     await window.firebaseDb.collection('expenses').doc(id).delete();
     showExpToast('Expense deleted.', 'success');

@@ -259,7 +259,7 @@ document.addEventListener('DOMContentLoaded', () => {
           // to that existing account so future sign-ins can use either.
           openLinkAccountModal(err);
         } else if (err.code !== 'auth/popup-closed-by-user') {
-          alert(friendlyError(err.code));
+          customAlert(friendlyError(err.code), 'error');
         }
       } finally {
         googleBtn.disabled = false;

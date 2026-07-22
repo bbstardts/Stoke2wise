@@ -74,9 +74,9 @@ async function saveProfile(e) {
   const name = document.getElementById('displayName').value.trim();
   try {
     await window.firebaseAuth.currentUser.updateProfile({ displayName: name });
-    alert('Profile updated.');
+    customAlert('Profile updated.', 'success');
   } catch (err) {
-    alert('Failed to update profile: ' + err.message);
+    customAlert('Failed to update profile: ' + err.message, 'error');
   }
 }
 
@@ -86,22 +86,22 @@ async function changePassword(e) {
   const currentPw = document.getElementById('currentPassword').value;
   const pw1 = document.getElementById('newPassword').value;
   const pw2 = document.getElementById('confirmPassword').value;
-  if (!currentPw)      { alert('Please enter your current password.'); return; }
-  if (pw1 !== pw2)     { alert('Passwords do not match.');             return; }
-  if (pw1.length < 8)  { alert('Password must be 8+ characters.');    return; }
+  if (!currentPw)      { customAlert('Please enter your current password.', 'warning'); return; }
+  if (pw1 !== pw2)     { customAlert('Passwords do not match.', 'warning');             return; }
+  if (pw1.length < 8)  { customAlert('Password must be 8+ characters.', 'warning');    return; }
   try {
     // Re-authenticate first to satisfy Firebase security requirement
     const user       = window.firebaseAuth.currentUser;
     const credential = firebase.auth.EmailAuthProvider.credential(user.email, currentPw);
     await user.reauthenticateWithCredential(credential);
     await user.updatePassword(pw1);
-    alert('Password changed successfully.');
+    customAlert('Password changed successfully.', 'success');
     document.getElementById('passwordForm').reset();
   } catch (err) {
     if (err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
-      alert('Current password is incorrect.');
+      customAlert('Current password is incorrect.', 'error');
     } else {
-      alert('Failed to change password: ' + err.message);
+      customAlert('Failed to change password: ' + err.message, 'error');
     }
   }
 }
@@ -136,9 +136,9 @@ async function saveWarehouseConfig(e) {
   };
   try {
     await window.firebaseDb.collection('settings').doc('config').set(config, { merge: true });
-    alert('Configuration saved.');
+    customAlert('Configuration saved.', 'success');
   } catch (err) {
-    alert('Failed to save configuration: ' + err.message);
+    customAlert('Failed to save configuration: ' + err.message, 'error');
   }
 }
 
@@ -185,7 +185,7 @@ async function addDepartment(e) {
       ? doc.data().departments
       : DEFAULT_DEPARTMENTS.slice();
     if (depts.some(d => d.toLowerCase() === name.toLowerCase())) {
-      alert('That department already exists.');
+      customAlert('That department already exists.', 'warning');
       return;
     }
     depts.push(name);
@@ -193,12 +193,12 @@ async function addDepartment(e) {
     input.value = '';
     renderDepartments(depts);
   } catch (err) {
-    alert('Failed to add department: ' + err.message);
+    customAlert('Failed to add department: ' + err.message, 'error');
   }
 }
 
 async function removeDepartment(name) {
-  if (!confirm(`Remove department "${name}"? Past transactions keep their recorded department.`)) return;
+  if (!(await customConfirm(`Remove department "${name}"? Past transactions keep their recorded department.`, { danger: true }))) return;
   try {
     const ref  = window.firebaseDb.collection('settings').doc('config');
     const doc  = await ref.get();
@@ -209,7 +209,7 @@ async function removeDepartment(name) {
     await ref.set({ departments: updated, updatedAt: new Date().toISOString() }, { merge: true });
     renderDepartments(updated);
   } catch (err) {
-    alert('Failed to remove department: ' + err.message);
+    customAlert('Failed to remove department: ' + err.message, 'error');
   }
 }
 
@@ -362,11 +362,11 @@ async function sendInvite(e) {
       status: 'invited',
       invitedAt: new Date().toISOString(),
     });
-    alert(`Invite recorded for ${email}.`);
+    customAlert(`Invite recorded for ${email}.`, 'success');
     document.getElementById('inviteForm').reset();
     loadUsers();
   } catch (err) {
-    alert('Failed to send invite: ' + err.message);
+    customAlert('Failed to send invite: ' + err.message, 'error');
   }
 }
 
@@ -385,7 +385,7 @@ async function approveUser(uid) {
 
     loadUsers();
   } catch (err) {
-    alert('Failed to approve user: ' + err.message);
+    customAlert('Failed to approve user: ' + err.message, 'error');
   }
 }
 
@@ -406,17 +406,17 @@ async function changeRole(uid, role) {
   try {
     await window.firebaseDb.collection('users').doc(uid).update({ role });
   } catch (err) {
-    alert('Failed to update role: ' + err.message);
+    customAlert('Failed to update role: ' + err.message, 'error');
   }
 }
 
 async function removeUser(uid) {
-  if (!confirm('Remove this team member?')) return;
+  if (!(await customConfirm('Remove this team member?', { danger: true }))) return;
   try {
     await window.firebaseDb.collection('users').doc(uid).delete();
     loadUsers();
   } catch (err) {
-    alert('Failed to remove user: ' + err.message);
+    customAlert('Failed to remove user: ' + err.message, 'error');
   }
 }
 
@@ -437,7 +437,7 @@ async function setClearHistoryPasskey(e) {
   const input = document.getElementById('newClearHistoryPasskey');
   const value = input.value.trim();
   if (value.length < 4) {
-    alert('Passkey must be at least 4 characters.');
+    customAlert('Passkey must be at least 4 characters.', 'warning');
     return;
   }
   try {
@@ -447,9 +447,9 @@ async function setClearHistoryPasskey(e) {
       { merge: true }
     );
     input.value = '';
-    alert('Passkey updated. You will need it next time you clear history.');
+    customAlert('Passkey updated. You will need it next time you clear history.', 'success');
   } catch (err) {
-    alert('Failed to set passkey: ' + err.message);
+    customAlert('Failed to set passkey: ' + err.message, 'error');
   }
 }
 
@@ -512,7 +512,7 @@ async function clearAllHistory() {
 
     if (allRefs.length === 0) {
       closeClearHistoryModal();
-      alert('There is no history to clear — it is already empty.');
+      customAlert('There is no history to clear — it is already empty.', 'info');
       return;
     }
 
@@ -526,7 +526,7 @@ async function clearAllHistory() {
     }
 
     closeClearHistoryModal();
-    alert(`✓ History cleared — ${allRefs.length} record(s) deleted across all pages.`);
+    customAlert(`History cleared — ${allRefs.length} record(s) deleted across all pages.`, 'success');
   } catch (err) {
     console.error('clearAllHistory error:', err);
     errorEl.textContent = 'Failed to clear history: ' + err.message;

@@ -21,10 +21,11 @@
  */
 
 :root {
-  /* Force light scheme so mobile browsers (Android "force dark") don't
-     auto-invert plain text inputs and leave them with a default black,
-     square-cornered border that clashes with the rest of the UI. */
-  color-scheme: light only;
+  /* Explicitly declare the scheme per-theme (see [data-theme="dark"] below).
+     Declaring this — light OR dark — is what stops mobile browsers'
+     "force dark" from auto-inverting plain inputs; it only misbehaves
+     when color-scheme is left undeclared. */
+  color-scheme: light;
 
   /* Palette — Warm Light Mode */
   --color-bg:           #FAFAF8;
@@ -42,6 +43,14 @@
   --color-warning:      #D97706;
   --color-danger:       #DC2626;
 
+  /* Liquid-glass hover highlight — a white glint reads as "light on glass"
+     on dark surfaces, but disappears on light-mode's near-white buttons.
+     Light mode uses a cool, low-opacity dark sheen instead, so the glass
+     effect still shows up as a highlight rather than vanishing. */
+  --glass-highlight: rgba(15, 23, 42, 0.18);
+  --glass-highlight-soft: rgba(15, 23, 42, 0.10);
+  --glass-shine: rgba(15, 23, 42, 0.24);
+
   /* Spacing & shape */
   --radius-sm:   6px;
   --radius:      10px;
@@ -54,6 +63,36 @@
   --font-mono:  'JetBrains Mono', 'Fira Code', monospace;
 }
 
+/* Palette — Dark Mode
+   Applied when <html data-theme="dark">, set by js/theme.js either from
+   the browser's prefers-color-scheme or the user's manual toggle choice. */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-bg:           #16181D;
+  --color-surface:      #1E2128;
+  --color-surface-2:    #262A33;
+  --color-border:       #343A46;
+  --color-text:         #E5E7EB;
+  --color-text-muted:   #9CA3AF;
+
+  --color-primary:      #22C55E;
+  --color-primary-dark: #16A34A;
+  --color-accent:       #EAB308;
+  --color-accent-dark:  #FACC15;
+  --color-success:      #22C55E;
+  --color-warning:      #F59E0B;
+  --color-danger:       #F87171;
+
+  --shadow: 0 4px 24px rgba(0,0,0,0.35);
+}
+
+/* Smooth crossfade instead of an abrupt flip when the theme changes */
+body, .sidebar, .modal-box, .data-table, input, select, textarea,
+.toast, .custom-date__panel, .search-dropdown {
+  transition: background-color var(--transition), color var(--transition), border-color var(--transition);
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body {
@@ -64,6 +103,172 @@ html, body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ── Liquid glass hover (all buttons) ──
+   Applies to native buttons/inputs plus any element with "btn" in its
+   class name (.btn-primary, .btn-ghost, .action-btn, .page-btn, the
+   sidebar's .hamburger-btn / .signout-btn, etc.) so every button in the
+   app gets it automatically — no per-page markup needed.
+
+   Two layers:
+   1. A soft specular highlight (::before) that tracks the pointer via
+      --glass-x/--glass-y, set by js/theme.js on pointermove. Looks like
+      light glinting off curved glass as your cursor moves over it.
+   2. A gentle lift + squish on hover/press, like the button is a soft
+      liquid-glass pill rather than a flat rectangle. */
+button,
+input[type="button"],
+input[type="submit"],
+[class*="btn"]:not(.action-btns),
+.sidebar-nav a {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition:
+    transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s ease,
+    filter 0.3s ease;
+}
+
+button::before,
+input[type="button"]::before,
+input[type="submit"]::before,
+[class*="btn"]:not(.action-btns)::before,
+.sidebar-nav a::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  /* A blended highlight (not the default "normal" blend) is what reads as
+     glass/water instead of a coat of paint: it lightens where the button
+     is already light and darkens where it's already dark, the way real
+     refracted light interacts with a surface, rather than flatly tinting
+     everything the same shade regardless of what's underneath.
+     Light theme's button colors (#15803D green, #DC2626 red) are already
+     deeply saturated, so the punchier "overlay" blend clips into a harsh,
+     slightly muddy hot spot here — "soft-light" nudges lightness instead
+     of pushing to the extremes, so it reads as a soft sheen. Dark mode
+     overrides this back to overlay below, where the darker base colors
+     have more headroom before clipping and can take the stronger blend. */
+  mix-blend-mode: soft-light;
+  background: radial-gradient(
+    var(--glass-radius, 150px) circle at var(--glass-x, 50%) var(--glass-y, 50%),
+    var(--glass-shine),
+    var(--glass-highlight-soft) 45%,
+    transparent 75%
+  );
+  transition: opacity 0.35s ease;
+}
+
+/* Dark theme's button colors have more headroom before clipping, so the
+   glint can use the punchier overlay blend instead of light theme's
+   gentler soft-light (see the comment on mix-blend-mode above). */
+[data-theme="dark"] button::before,
+[data-theme="dark"] input[type="button"]::before,
+[data-theme="dark"] input[type="submit"]::before,
+[data-theme="dark"] [class*="btn"]:not(.action-btns)::before,
+[data-theme="dark"] .sidebar-nav a::before {
+  mix-blend-mode: overlay;
+}
+
+button:hover::before,
+input[type="button"]:hover::before,
+input[type="submit"]:hover::before,
+[class*="btn"]:not(.action-btns):hover::before,
+.sidebar-nav a:hover::before {
+  opacity: 1;
+  /* Same turbulence trick as the text ripple below, applied to the shine
+     itself: the highlight's edge wobbles slightly instead of sitting
+     perfectly still, which is what sells "light moving on a liquid
+     surface" rather than "a gradient someone drew". */
+  filter: url(#sw-glass-shimmer);
+}
+
+/* Small pill buttons (row actions like Edit/Delete) get a proportionally
+   smaller specular core — at the default 130px radius the highlight is
+   wider than the whole button, so instead of a glint it reads as a flat
+   wash of color regardless of how translucent it is. */
+.action-btn,
+.page-btn,
+.pagination-btn {
+  --glass-radius: 64px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button:hover::before, input[type="button"]:hover::before, input[type="submit"]:hover::before,
+  [class*="btn"]:not(.action-btns):hover::before, .sidebar-nav a:hover::before {
+    filter: none !important;
+  }
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+[class*="btn"]:not(.action-btns):hover,
+.sidebar-nav a:hover {
+  transform: translateY(-1px) scale(1.02);
+  filter: saturate(1.1) brightness(1.04);
+  box-shadow:
+    0 8px 18px -8px rgba(0, 0, 0, 0.28),
+    inset 0 1px 0 var(--glass-highlight);
+}
+
+button:active,
+input[type="button"]:active,
+input[type="submit"]:active,
+[class*="btn"]:not(.action-btns):active,
+.sidebar-nav a:active {
+  transform: translateY(0) scale(0.96);
+  transition-duration: 0.15s;
+}
+
+button:disabled,
+input[type="button"]:disabled,
+input[type="submit"]:disabled,
+[class*="btn"]:not(.action-btns):disabled,
+[class*="btn"]:not(.action-btns)[aria-disabled="true"] {
+  transform: none !important;
+  filter: none !important;
+  box-shadow: none !important;
+}
+button:disabled::before,
+input[type="button"]:disabled::before,
+input[type="submit"]:disabled::before,
+[class*="btn"]:not(.action-btns):disabled::before,
+[class*="btn"]:not(.action-btns)[aria-disabled="true"]::before {
+  opacity: 0 !important;
+}
+
+/* Every button — solid-colored ones (Save, Delete) included — shares the
+   same neutral glass-shine tokens the sidebar links use (light theme's
+   cool dark sheen, dark theme's white one). No per-button color tinting:
+   the sidebar's "Settings" hover is the reference look, and that's a
+   plain neutral sheen, not a color-matched one, so every button now reads
+   the same way instead of the colored ones looking like a different
+   effect. */
+
+@media (prefers-reduced-motion: reduce) {
+  button, input[type="button"], input[type="submit"], [class*="btn"]:not(.action-btns), .sidebar-nav a {
+    transition: none !important;
+  }
+  button:hover, input[type="button"]:hover, input[type="submit"]:hover, [class*="btn"]:not(.action-btns):hover, .sidebar-nav a:hover {
+    transform: none !important;
+  }
+}
+
+/* ── Water-ripple text reveal — light mode only ──
+   js/theme.js wraps each button/link's text in <span class="glass-text">
+   and injects a shared SVG turbulence filter. In light mode, hovering
+   attaches that filter so the label looks like it's rippling into view
+   through water. Dark mode keeps the plain glass shine instead. */
+html:not([data-theme="dark"]) button:hover .glass-text,
+html:not([data-theme="dark"]) [class*="btn"]:not(.action-btns):hover .glass-text,
+html:not([data-theme="dark"]) .sidebar-nav a:hover .glass-text {
+  filter: url(#sw-water-ripple);
+  display: inline-block;
 }
 
 /* ── Buttons ── */
@@ -98,7 +303,7 @@ html, body {
   cursor: pointer;
   transition: color var(--transition), border-color var(--transition);
 }
-.btn-ghost:hover { color: var(--color-text); border-color: var(--color-text-muted); }
+.btn-ghost:hover { color: var(--color-text); border-color: transparent; background: var(--color-surface-2); }
 
 .btn-danger {
   display: inline-flex;
@@ -321,12 +526,13 @@ a:hover { text-decoration: underline; }
   padding: 6px 12px;
   border-radius: 5px;
   cursor: pointer;
-  transition: background var(--transition), color var(--transition);
+  transition: background var(--transition), color var(--transition), box-shadow var(--transition);
 }
 .usage-toggle-btn:hover { color: var(--color-text); }
 .usage-toggle-btn.is-active {
   background: var(--color-primary);
   color: #fff;
+  box-shadow: 0 0 10px rgba(21,128,61,0.45);
 }
 
 /* ── Chart tooltip (used by Dashboard Stock Movement chart) ── */

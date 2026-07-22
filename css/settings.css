@@ -107,3 +107,10 @@
   margin-top: 4px;
   border-top: 1px dashed rgba(220,38,38,0.25);
 }
+
+/* Contain wide tables so they scroll internally instead of
+   stretching the whole page horizontally */
+.table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}

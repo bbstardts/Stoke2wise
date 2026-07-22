@@ -13,6 +13,7 @@ const auth = () => window.firebaseAuth;
 
 let allProducts = [];
 let unsubscribe = null;
+let recentProductChangesData = [];
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const addBtn         = document.getElementById('addProductBtn');
@@ -35,6 +36,11 @@ document.addEventListener('DOMContentLoaded', () => {
   categoryFilter.addEventListener('change', filterProducts);
   productForm.addEventListener('submit',   handleFormSubmit);
   document.getElementById('category').addEventListener('change', handleCategorySelectChange);
+  document.getElementById('exportProductChangesBtn')?.addEventListener('click', () => {
+    if (window.printProductChangesReport) {
+      window.printProductChangesReport(recentProductChangesData);
+    }
+  });
   loadProducts();
   loadRecentProductChanges();
 
@@ -102,7 +108,7 @@ async function saveProductToFirestore(data) {
 }
 
 async function deleteProduct(id) {
-  if (!confirm('Delete this product? This cannot be undone.')) return;
+  if (!(await customConfirm('Delete this product? This cannot be undone.', { danger: true }))) return;
   try {
     const before = allProducts.find(p => p.id === id);
     const user = auth().currentUser;
@@ -123,7 +129,7 @@ async function deleteProduct(id) {
     });
     await batch.commit();
   } catch (err) {
-    alert('Error deleting product: ' + err.message);
+    customAlert('Error deleting product: ' + err.message, 'error');
   }
 }
 
@@ -400,6 +406,7 @@ let unsubProductHistory = null;
 
 function loadRecentProductChanges() {
   const tbody = document.getElementById('recentProductChangesBody');
+  const exportBtn = document.getElementById('exportProductChangesBtn');
   if (!tbody) return;
   if (unsubProductHistory) unsubProductHistory();
 
@@ -411,10 +418,13 @@ function loadRecentProductChanges() {
         .map(d => d.data())
         .filter(d => ['Product Added', 'Product Updated', 'Product Removed'].includes(d.actionType))
         .slice(0, 50);
+      recentProductChangesData = rows;
       renderRecentProductChanges(rows);
+      if (exportBtn) exportBtn.disabled = !rows.length;
     }, err => {
       console.error('product history onSnapshot error:', err);
       tbody.innerHTML = `<tr><td colspan="5" class="table-empty">Could not load product history.</td></tr>`;
+      if (exportBtn) exportBtn.disabled = true;
     });
 }
 
@@ -425,25 +435,60 @@ function renderRecentProductChanges(rows) {
     tbody.innerHTML = `<tr><td colspan="5" class="table-empty">No product changes yet.</td></tr>`;
     return;
   }
-  tbody.innerHTML = rows.map(r => {
-    const dateStr = r.createdAt ? new Date(r.createdAt).toLocaleString(undefined,
-      { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
-    const badgeClass = r.actionType === 'Product Removed' ? 'tx-badge--stockout'
-      : (r.actionType === 'Product Added' ? 'tx-badge--in' : 'tx-badge--neutral');
-    return `<tr>
-      <td class="date-cell">${dateStr}</td>
-      <td>${escHtml(r.category || '—')}</td>
-      <td class="product-cell">${escHtml(r.productName || '—')}</td>
-      <td><span class="tx-badge ${badgeClass}">${escHtml(r.description || r.actionType || '—')}</span></td>
-      <td>${escHtml(r.performedBy || '—')}</td>
+
+  // Group changes by calendar day, newest first — mirrors how GRN/Issue
+  // history groups line items under one header per transaction.
+  const groups = [];
+  let currentKey = null, currentGroup = null;
+  rows.forEach(r => {
+    const d = r.createdAt ? new Date(r.createdAt) : null;
+    const key = d ? d.toDateString() : 'unknown';
+    if (key !== currentKey) {
+      currentKey = key;
+      currentGroup = { dateLabel: d ? d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) : 'Unknown date', items: [] };
+      groups.push(currentGroup);
+    }
+    currentGroup.items.push(r);
+  });
+
+  tbody.innerHTML = groups.map(group => {
+    const headerRow = `<tr class="history-category-row">
+      <td colspan="5">${escHtml(group.dateLabel)}</td>
     </tr>`;
+
+    const itemRows = group.items.map(r => {
+      const timeStr = r.createdAt ? new Date(r.createdAt).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : '—';
+      const badgeClass = r.actionType === 'Product Removed' ? 'tx-badge--stockout'
+        : (r.actionType === 'Product Added' ? 'tx-badge--in' : 'tx-badge--neutral');
+      return `<tr>
+        <td class="date-cell">${timeStr}</td>
+        <td>${escHtml(r.category || '—')}</td>
+        <td class="product-cell">${escHtml(r.productName || '—')}</td>
+        <td><span class="tx-badge ${badgeClass}">${escHtml(r.description || r.actionType || '—')}</span></td>
+        <td>${escHtml(r.performedBy || '—')}</td>
+      </tr>`;
+    }).join('');
+
+    const added   = group.items.filter(r => r.actionType === 'Product Added').length;
+    const removed = group.items.filter(r => r.actionType === 'Product Removed').length;
+    const chips = [
+      added   ? `<span class="totals-chip totals-chip--in">${added} added</span>`     : '',
+      removed ? `<span class="totals-chip totals-chip--out">${removed} removed</span>` : '',
+    ].filter(Boolean).join('');
+
+    const subtotalRow = `<tr class="history-category-subtotal-row">
+      <td colspan="3" class="totals-label">${group.items.length} change${group.items.length !== 1 ? 's' : ''}</td>
+      <td colspan="2" class="totals-num" style="text-align:right">${chips}</td>
+    </tr>`;
+
+    return headerRow + itemRows + subtotalRow;
   }).join('');
 }
 
 // ── Print Report ──────────────────────────────────────────────────────────────
 function printCurrentReport() {
   if (!allProducts.length) {
-    alert('No products loaded yet — please wait a moment and try again.');
+    customAlert('No products loaded yet — please wait a moment and try again.', 'warning');
     return;
   }
   const query = searchInput.value.toLowerCase().trim();

@@ -1,0 +1,149 @@
+/* custom-date.css — custom calendar picker (wraps a real <input type="date">)
+   Mirrors the searchable-select combobox pattern in forms.css so both
+   controls feel like one design language. */
+
+.custom-date {
+  position: relative;
+  width: 100%;
+}
+.custom-date__native {
+  /* kept in the DOM so existing .value / change-event / required logic
+     keeps working untouched — just visually hidden, same technique as
+     .searchable-select__native. */
+  position: absolute !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+  height: 0 !important;
+  width: 0 !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+  border: none !important;
+  padding: 0 !important;
+}
+.custom-date__display {
+  width: 100%;
+  padding: 8px 32px 8px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text);
+  font-size: 13px;
+  outline: none;
+  min-width: 0;
+  cursor: pointer;
+  caret-color: transparent;
+}
+.custom-date__display::placeholder { color: var(--color-text-muted); }
+.custom-date__display:focus { border-color: var(--color-primary); }
+.custom-date__display:disabled {
+  background: var(--color-surface-2);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+.custom-date__icon {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  color: var(--color-text-muted);
+  pointer-events: none;
+}
+
+.custom-date__panel {
+  position: fixed;
+  z-index: 3000;
+  width: 264px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 8px 24px rgba(0,0,0,.12);
+  padding: 12px;
+}
+.custom-date__panel.hidden { display: none; }
+
+.custom-date__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+.custom-date__nav {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 13px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--transition), color var(--transition);
+}
+.custom-date__nav:hover { background: var(--color-surface-2); color: var(--color-text); }
+.custom-date__label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text);
+}
+
+.custom-date__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.custom-date__dow {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-align: center;
+  padding: 4px 0 6px;
+}
+.custom-date__day {
+  background: none;
+  border: none;
+  font-size: 12.5px;
+  color: var(--color-text);
+  padding: 6px 0;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: background var(--transition), color var(--transition);
+}
+.custom-date__day:hover { background: var(--color-surface-2); }
+.custom-date__day.is-muted { color: var(--color-text-muted); opacity: 0.5; }
+.custom-date__day.is-today { font-weight: 700; color: var(--color-primary); }
+.custom-date__day.is-selected {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 700;
+}
+.custom-date__day.is-selected:hover { background: var(--color-primary-dark); }
+
+.custom-date__foot {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--color-border);
+}
+.custom-date__foot button {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-primary);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: var(--radius-sm);
+}
+.custom-date__foot button:hover { background: var(--color-surface-2); }
+.custom-date__foot .custom-date__clear { color: var(--color-text-muted); }
+
+@media (max-width: 600px) {
+  .custom-date__display { padding: 10px 32px 10px 12px; font-size: 14px; }
+  .custom-date__panel { width: min(300px, 92vw); }
+  .custom-date__day { padding: 9px 0; font-size: 13px; }
+}

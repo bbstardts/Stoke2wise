@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    const LIMIT = 8;
+    const LIMIT = 10;
     const sorted = [...data.rows].sort((a, b) =>
       usageMode === 'most' ? b.total - a.total : a.total - b.total
     );

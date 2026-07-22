@@ -1,0 +1,137 @@
+/* ui-dialog.css — shared toast + confirm-modal system (StockWise)
+   Replaces native alert()/confirm() everywhere. Reuses the existing
+   .modal / .modal-box tokens from global.css for the confirm dialog,
+   and adds a lightweight toast stack for alert() replacements. */
+
+/* ── Toast stack ── */
+.toast-stack {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 4000;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: min(360px, calc(100vw - 32px));
+  pointer-events: none;
+}
+.toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-text-muted);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+  padding: 12px 34px 12px 14px;
+  font-size: 13px;
+  color: var(--color-text);
+  line-height: 1.5;
+  overflow: hidden;
+  pointer-events: auto;
+  opacity: 0;
+  transform: translateX(24px);
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.toast.is-visible { opacity: 1; transform: translateX(0); }
+.toast.is-leaving  { opacity: 0; transform: translateX(24px); }
+
+.toast--success { border-left-color: var(--color-success); }
+.toast--error   { border-left-color: var(--color-danger); }
+.toast--warning { border-left-color: var(--color-warning); }
+.toast--info    { border-left-color: var(--color-primary); }
+
+.toast-icon {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  margin-top: 1px;
+}
+.toast--success .toast-icon { background: rgba(22,163,74,0.12); color: var(--color-success); }
+.toast--error   .toast-icon { background: rgba(220,38,38,0.10); color: var(--color-danger); }
+.toast--warning .toast-icon { background: rgba(217,119,6,0.12); color: var(--color-warning); }
+.toast--info    .toast-icon { background: rgba(21,128,61,0.10); color: var(--color-primary); }
+
+.toast-msg { flex: 1 1 auto; padding-top: 1px; word-break: break-word; }
+
+.toast-close {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: color var(--transition), background var(--transition);
+}
+.toast-close:hover { color: var(--color-text); background: var(--color-surface-2); }
+
+.toast-bar {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  opacity: 0.35;
+  width: 100%;
+  transform-origin: left;
+  animation: toast-shrink linear forwards;
+}
+.toast--success .toast-bar { color: var(--color-success); }
+.toast--error   .toast-bar { color: var(--color-danger); }
+.toast--warning .toast-bar { color: var(--color-warning); }
+.toast--info    .toast-bar { color: var(--color-primary); }
+
+@keyframes toast-shrink {
+  from { transform: scaleX(1); }
+  to   { transform: scaleX(0); }
+}
+
+@media (max-width: 600px) {
+  .toast-stack { top: auto; bottom: 16px; right: 12px; left: 12px; max-width: none; }
+  .toast { transform: translateY(24px); }
+  .toast.is-visible { transform: translateY(0); }
+  .toast.is-leaving  { transform: translateY(24px); }
+}
+
+/* ── Confirm modal ── */
+.confirm-modal .modal-box {
+  width: min(400px, 92vw);
+  padding: 24px;
+}
+.confirm-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 14px;
+}
+.confirm-modal--danger .confirm-icon { background: rgba(220,38,38,0.10); color: var(--color-danger); }
+.confirm-modal--default .confirm-icon { background: rgba(21,128,61,0.10); color: var(--color-primary); }
+.confirm-message {
+  font-size: 13.5px;
+  color: var(--color-text);
+  line-height: 1.6;
+  margin-bottom: 22px;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}

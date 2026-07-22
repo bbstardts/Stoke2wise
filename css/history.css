@@ -345,5 +345,20 @@
 .skeleton-pill { height: 20px; width: 64px; border-radius: 20px; display: block; }
 .skeleton-row td { padding: 13px 14px; }
 
+/* ── Row Actions (View button on GRN/History/Issue) ── */
+.action-btn {
+  background: none;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-muted);
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition), border-color var(--transition), transform 0.15s ease, box-shadow 0.15s ease;
+}
+.action-btn:hover         { color: var(--color-primary); background: var(--color-surface-2); border-color: transparent; transform: scale(1.06); box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+.action-btn--danger:hover { color: var(--color-danger); background: var(--color-surface-2); border-color: transparent; }
+.action-btn:active        { transform: scale(0.96); }
+
 
 

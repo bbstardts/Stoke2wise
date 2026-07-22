@@ -425,7 +425,7 @@ async function handleFormSubmit(e) {
 }
 
 async function deletePrice(priceDocId) {
-  if (!confirm('Remove this price? The product itself will not be affected.')) return;
+  if (!(await customConfirm('Remove this price? The product itself will not be affected.', { danger: true }))) return;
   try {
     const before = allPrices.find(p => p.id === priceDocId);
     const user = auth().currentUser;
@@ -442,7 +442,7 @@ async function deletePrice(priceDocId) {
     });
     await batch.commit();
   } catch (err) {
-    alert('Error deleting price: ' + err.message);
+    customAlert('Error deleting price: ' + err.message, 'error');
   }
 }
 

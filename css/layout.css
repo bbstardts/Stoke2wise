@@ -33,7 +33,7 @@ body {
 .sidebar {
   width: 220px;
   min-width: 220px;
-  background: #F3F4F6;
+  background: var(--color-surface-2);
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;

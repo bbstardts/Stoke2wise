@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <script src="../js/theme.js"></script>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="color-scheme" content="light only" />
+  <meta name="color-scheme" content="light dark" />
   <title>StockWise — Products</title>
   <link rel="stylesheet" href="../css/global.css" />
+  <link rel="stylesheet" href="../css/theme-dark.css" />
+  <link rel="stylesheet" href="../css/ui-dialog.css" />
   <link rel="stylesheet" href="../css/layout.css" />
   <link rel="stylesheet" href="../css/forms.css" />
   <link rel="stylesheet" href="../css/history.css" />
@@ -80,12 +83,18 @@
     <section class="section-block">
       <div class="section-header-row">
         <h3 class="section-title">Recent Product Changes</h3>
+        <button id="exportProductChangesBtn" class="btn-export-pdf" title="Download as PDF" disabled>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" width="13" height="13">
+            <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v4a2 2 0 002 2h1v1a1 1 0 001 1h8a1 1 0 001-1v-1h1a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a1 1 0 00-1-1H6a1 1 0 00-1 1zm2 0h6v3H7V4zm-1 9h8v3H6v-3zm8-5a1 1 0 110 2 1 1 0 010-2z" clip-rule="evenodd"/>
+          </svg>
+          PDF
+        </button>
       </div>
       <div class="table-scroll-wrap" style="max-height:400px;overflow-y:auto;">
         <table class="data-table history-table" id="recentProductChangesTable">
           <thead>
             <tr>
-              <th>Date / Time</th>
+              <th>Time</th>
               <th>Category</th>
               <th>Product</th>
               <th>Change</th>
@@ -169,6 +178,7 @@
   <script src="../js/sidebar.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/html2pdf.js@0.10.1/dist/html2pdf.bundle.min.js"></script>
   <script src="../js/print.js"></script>
+  <script src="../js/ui-dialog.js"></script>
   <script src="../js/searchable-select.js"></script>
   <script src="../js/products.js"></script>
 </body>

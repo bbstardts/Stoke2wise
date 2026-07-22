@@ -41,6 +41,7 @@
         <div class="sidebar-footer">
           <div class="user-avatar" title="${userName}">${initials}</div>
           <span class="user-name">${userName}</span>
+          <button class="theme-toggle-btn" data-theme-toggle title="Toggle theme">◐</button>
           <button class="signout-btn" id="signOutBtn" title="Sign out">↪</button>
         </div>
       </nav>
@@ -49,6 +50,7 @@
           <span></span><span></span><span></span>
         </button>
         <span class="brand-name">⬡ StockWise</span>
+        <button class="theme-toggle-btn" data-theme-toggle title="Toggle theme">◐</button>
       </div>`;
   }
 

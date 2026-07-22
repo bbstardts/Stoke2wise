@@ -955,6 +955,194 @@ window.printRecentTransactionsReport = function(records, opts = {}) {
   printViaIframe(html, `${reportTitle.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
 };
 
+/* ─── Recent Product Changes Report ───────────────────────────────────────
+   Used by the "PDF" export button on the Products page — same Excel-style
+   layout as the GRN/Issue report, but grouped by calendar day instead of
+   by document, with Added/Updated/Removed counts instead of a qty total.
+   ──────────────────────────────────────────────────────────────────────── */
+window.printProductChangesReport = function(rows = []) {
+  const reportTitle = 'Recent Product Changes Report';
+  const now = formatDateTime(new Date().toISOString());
+
+  function escH(str) {
+    return String(str ?? '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+  function fmtTime(iso) {
+    if (!iso) return '\u2014';
+    return new Date(iso).toLocaleTimeString(undefined, { hour:'2-digit', minute:'2-digit' });
+  }
+
+  // Group by calendar day, newest first (same grouping the on-page table uses)
+  const groups = [];
+  let currentKey = null, currentGroup = null;
+  rows.forEach(r => {
+    const d = r.createdAt ? new Date(r.createdAt) : null;
+    const key = d ? d.toDateString() : 'unknown';
+    if (key !== currentKey) {
+      currentKey = key;
+      currentGroup = {
+        dateLabel: d ? d.toLocaleDateString(undefined, { year:'numeric', month:'short', day:'numeric' }) : 'Unknown date',
+        items: [],
+      };
+      groups.push(currentGroup);
+    }
+    currentGroup.items.push(r);
+  });
+
+  const totalChanges = rows.length;
+  const totalAdded   = rows.filter(r => r.actionType === 'Product Added').length;
+  const totalRemoved = rows.filter(r => r.actionType === 'Product Removed').length;
+  const totalUpdated = totalChanges - totalAdded - totalRemoved;
+
+  const rowsHtml = groups.length
+    ? groups.map(group => {
+        const added   = group.items.filter(r => r.actionType === 'Product Added').length;
+        const removed = group.items.filter(r => r.actionType === 'Product Removed').length;
+        const summary = [
+          added   ? `+${added} added`     : '',
+          removed ? `\u2212${removed} removed` : '',
+        ].filter(Boolean).join(' \u00b7 ') || `${group.items.length} change${group.items.length !== 1 ? 's' : ''}`;
+
+        const headerRow = `<tr class="cat-header-row">
+          <td colspan="4">${escH(group.dateLabel)}</td>
+          <td class="c-num">${escH(summary)}</td>
+        </tr>`;
+
+        const itemRows = group.items.map((r, i) => `
+          <tr style="background:${i % 2 === 0 ? '#ffffff' : '#f7f8fa'}">
+            <td class="c-num" style="text-align:left">${fmtTime(r.createdAt)}</td>
+            <td class="c-cat">${escH(r.category || '\u2014')}</td>
+            <td class="c-prod">${escH(r.productName || '\u2014')}</td>
+            <td class="c-desc">${escH(r.description || r.actionType || '\u2014')}</td>
+            <td class="c-num" style="text-align:left">${escH(r.performedBy || '\u2014')}</td>
+          </tr>`).join('');
+
+        return headerRow + itemRows;
+      }).join('')
+    : `<tr><td colspan="5" style="text-align:center;padding:16px;color:#888">No records.</td></tr>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>${reportTitle}</title>
+<style>
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:'Segoe UI',Arial,sans-serif; font-size:10pt; color:#111; background:#fff; }
+  .page { width:100%; max-width:1050px; margin:0 auto; padding:20px 24px; }
+
+  .rpt-header { display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:3px solid #111; padding-bottom:10px; margin-bottom:14px; }
+  .rpt-co { font-size:18pt; font-weight:800; letter-spacing:-.5px; }
+  .rpt-co-sub { font-size:8pt; color:#555; text-transform:uppercase; letter-spacing:.5px; margin-top:1px; }
+  .rpt-title-blk { text-align:right; }
+  .rpt-title { font-size:12pt; font-weight:700; }
+  .rpt-ts { font-size:8.5pt; color:#666; margin-top:2px; }
+
+  .summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+  .s-box { border:1px solid #d1d5db; border-radius:3px; padding:8px 10px; text-align:center; }
+  .s-val { font-size:16pt; font-weight:800; line-height:1; }
+  .s-lbl { font-size:7.5pt; color:#555; margin-top:3px; text-transform:uppercase; letter-spacing:.4px; }
+  .s-box.s-in  { background:#f0fdf4; border-color:#86efac; }
+  .s-box.s-out { background:#fef2f2; border-color:#fca5a5; }
+
+  table { width:100%; border-collapse:collapse; font-size:9pt; }
+  thead th {
+    background:#15803D; color:#fff; padding:6px 8px;
+    text-align:left; font-size:8pt; font-weight:700;
+    text-transform:uppercase; letter-spacing:.4px;
+    border:1px solid #15803D; white-space:nowrap;
+  }
+  thead th.c-num { text-align:left; }
+  tbody td { padding:5px 8px; border:1px solid #d1d5db; vertical-align:middle; }
+  tbody td.c-num  { text-align:left; font-variant-numeric:tabular-nums; }
+  tbody td.c-prod { font-weight:600; }
+  tbody td.c-desc { color:#555; font-size:8.5pt; max-width:220px; white-space:normal; word-wrap:break-word; overflow-wrap:break-word; }
+  tbody td.c-cat  { color:#444; }
+
+  tfoot td { padding:6px 8px; border:1px solid #d1d5db; font-weight:700;
+    background:#15803D; color:#fff; font-size:9pt; }
+
+  tbody tr.cat-header-row td {
+    background:#F0FDF4; color:#15803D; font-weight:700; font-size:8.5pt;
+    padding:6px 8px; border:1px solid #BBF7D0;
+  }
+  tbody tr.cat-header-row td.c-num { text-align:right; }
+
+  .rpt-footer { margin-top:16px; padding-top:8px; border-top:1px solid #e5e7eb;
+    font-size:8pt; color:#9ca3af; text-align:center; }
+
+  @page { size:A4 landscape; margin:12mm 14mm; }
+  @media print {
+    body { font-size:9pt; }
+    .page { padding:0; }
+    thead { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tfoot { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    tbody tr { -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="rpt-header">
+    <div>
+      <div class="rpt-co">StockWise</div>
+      <div class="rpt-co-sub">Warehouse Management System</div>
+    </div>
+    <div class="rpt-title-blk">
+      <div class="rpt-title">${reportTitle}</div>
+      <div class="rpt-ts">Printed: ${now}</div>
+    </div>
+  </div>
+
+  <div class="summary">
+    <div class="s-box">
+      <div class="s-val">${totalChanges}</div>
+      <div class="s-lbl">Total Changes</div>
+    </div>
+    <div class="s-box s-in">
+      <div class="s-val" style="color:#166534">${totalAdded}</div>
+      <div class="s-lbl">Added</div>
+    </div>
+    <div class="s-box">
+      <div class="s-val">${totalUpdated}</div>
+      <div class="s-lbl">Updated</div>
+    </div>
+    <div class="s-box s-out">
+      <div class="s-val" style="color:#991b1b">${totalRemoved}</div>
+      <div class="s-lbl">Removed</div>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th class="c-cat">Category</th>
+        <th class="c-prod">Product</th>
+        <th class="c-desc">Change</th>
+        <th>Changed By</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+    <tfoot>
+      <tr>
+        <td colspan="5">TOTAL \u2014 ${totalChanges} change${totalChanges !== 1 ? 's' : ''} across ${groups.length} day${groups.length !== 1 ? 's' : ''}</td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <div class="rpt-footer">
+    StockWise WMS &nbsp;\u00b7&nbsp; ${reportTitle} &nbsp;\u00b7&nbsp; ${now}
+  </div>
+</div>
+</body>
+</html>`;
+
+  printViaIframe(html, `${reportTitle.replace(/[^a-z0-9]+/gi, '-')}.pdf`);
+};
+
 window.printHistoryReport = function(records, meta = {}) {
   const now         = formatDateTime(new Date().toISOString());
   const actionLabel = meta.actionLabel || 'All Transactions';
@@ -1217,7 +1405,7 @@ window.downloadCSV = function(rows, filename) {
 window.printConsumptionReport = function(data) {
   if (typeof window.jspdf === 'undefined' || typeof window.jspdf.jsPDF === 'undefined') {
     console.error('jsPDF is not loaded — add the jsPDF <script> tags to this page.');
-    alert('PDF export is unavailable right now (missing library). Please try again or refresh the page.');
+    customAlert('PDF export is unavailable right now (missing library). Please try again or refresh the page.', 'error');
     return;
   }
 
