@@ -12,7 +12,7 @@
  * returning users get the new version instead of a stale cached one.
  */
 
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `stockwise-shell-${CACHE_VERSION}`;
 
 // Every local page/style/script StockWise needs to run.
