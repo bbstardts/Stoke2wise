@@ -135,6 +135,23 @@
   </script>
 
   <script src="js/firebase-config.js"></script>
+  <script>
+    // If a session from a previous sign-in is still persisted (Firebase
+    // Auth's default 'local' persistence keeps this in IndexedDB), this
+    // fires with that user WITHOUT needing the network — so a returning
+    // user who's offline skips straight to the dashboard instead of
+    // landing on a login form that can only fail while offline.
+    (function () {
+      var auth = window.firebaseAuth;
+      if (!auth) return;
+      auth.onAuthStateChanged(function (user) {
+        var isPendingNotice = new URLSearchParams(window.location.search).get('pending') === '1';
+        if (user && !isPendingNotice) {
+          window.location.replace('pages/dashboard.html');
+        }
+      });
+    })();
+  </script>
   <script src="js/ui-dialog.js"></script>
   <script src="js/auth.js"></script>
 
